@@ -107,7 +107,7 @@ main#view { padding: 32px; max-width: 1320px; width: 100%; }
   .topo .perfil span { display: none; }
   .topo .btn-sim { display: none; }
   main#view { padding: 20px 16px; }
-  .barra-mob { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; inset: auto 0 0 0; background: var(--preto); z-index: 30; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+  .barra-mob { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; inset: auto 0 0 0; background: var(--preto); z-index: 30; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
   .barra-mob a { color: #B5B5B0; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.68rem; padding: 6px 2px; border-radius: 8px; min-height: 48px; justify-content: center; }
   .barra-mob a.ativo { color: var(--branco); background: #232322; }
   .barra-mob a.ativo svg { color: var(--vinho); }
@@ -874,25 +874,6 @@ main#view.emp-view { padding-top: 0; }
 .torre-entrega .pulso-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ciano); box-shadow: 0 0 10px var(--ciano); }
 .ent-un b { font-family: var(--mono); color: #fff; }
 
-/* Repositório de apresentações */
-.rep-filtros { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: end; background: var(--sup); border: 1px solid var(--linha); border-radius: var(--raio); padding: 14px; margin-bottom: 12px; }
-.rep-filtros .campo label { font-size: var(--t-xs); color: var(--cinza); }
-.rep-filtros select, .rep-filtros input { min-height: 42px; }
-@media (max-width: 720px) { .rep-filtros { grid-template-columns: 1fr 1fr; } .rep-busca { grid-column: 1 / -1; } }
-.rep-cont { color: var(--cinza); font-size: var(--t-s); margin-bottom: 14px; }
-.rep-card .foto { display: block; }
-.rep-card .foto img { object-position: top center; transition: transform .4s ease; }
-.rep-card a.foto:hover img { transform: scale(1.04); }
-.rep-docs { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--linha-suave); }
-.rep-doc { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--linha-suave); }
-.rep-doc > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
-.rep-doc b { font-size: var(--t-s); }
-.rep-doc > div > span { font-size: var(--t-xs); color: var(--cinza); white-space: nowrap; }
-.rep-doc .acoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.rep-doc .acoes .btn { width: 100%; }
-.rep-doc .btn svg { width: 16px; height: 16px; }
-.rep-pag { margin: 12px 0 0; align-self: flex-start; }
-.rep-card .corpo { padding-bottom: 18px; }
 </style>
 <div id="app" aria-live="polite"></div>
 <div id="toasts" role="status" aria-live="polite"></div>
@@ -1951,7 +1932,6 @@ main#view.emp-view { padding-top: 0; }
     if (h === 'simulador') return '/simulador';
     if (h === 'salvas') return '/simulacoes';
     if (h === 'dados') return '/sobre';
-    if (h === 'repositorio' || h === 'books') return '/repositorio';
     if (DATA.emps.some((e) => e.slug === h)) return `/e/${h}`;
     return '/';
   }
@@ -1978,7 +1958,6 @@ main#view.emp-view { padding-top: 0; }
       if (p[0] === 'simulador') return await telaSimulador(view);
       if (p[0] === 'simulacoes') return telaSimulacoes(view);
       if (p[0] === 'sobre') return telaSobre(view);
-      if (p[0] === 'repositorio') return await telaRepositorio(view);
       view.innerHTML = vazio('Página não encontrada', 'Volte ao catálogo.', '<a class="btn prim" href="#/">Ir para o início</a>');
     } catch (e) {
       view.innerHTML = vazio('Não foi possível abrir', esc(e.message), '<a class="btn prim" href="#/">Voltar ao catálogo</a>');
@@ -1997,7 +1976,6 @@ main#view.emp-view { padding-top: 0; }
           <nav class="nav" aria-label="Principal">
             <a href="#/" data-r="inicio">${IC.inicio}Início</a>
             <a href="#/empreendimentos" data-r="emp">${IC.predio}Empreendimentos</a>
-            <a href="#/repositorio" data-r="rep">${IC.pdf}Repositório de apresentações</a>
             <a href="#/simulador" data-r="sim">${IC.calc}Simulador de financiamento</a>
             <a href="#/simulacoes" data-r="sims">${IC.pasta}Simulações salvas</a>
             <a href="#/sobre" data-r="sobre">${IC.config}Seus dados e fontes</a>
@@ -2014,7 +1992,6 @@ main#view.emp-view { padding-top: 0; }
         </div>
         <nav class="barra-mob" aria-label="Principal (celular)">
           <a href="#/" data-r="inicio">${IC.inicio}Início</a>
-          <a href="#/repositorio" data-r="rep">${IC.pdf}Books</a>
           <a href="#/simulador" data-r="sim">${IC.calc}Simular</a>
           <a href="#/simulacoes" data-r="sims">${IC.pasta}Salvas</a>
           <a href="#/sobre" data-r="sobre">${IC.config}Dados</a>
@@ -2024,7 +2001,7 @@ main#view.emp-view { padding-top: 0; }
       $('#q').addEventListener('input', () => { if (!/^\/?(empreendimentos)?$/.test(rotaAtual.split('?')[0]) && rotaAtual.split('?')[0] !== '/') ir(`/?q=${encodeURIComponent($('#q').value)}`); });
     }
     if (typeof atualizarBarraCmp === 'function') setTimeout(atualizarBarraCmp);
-    const chave = rota === '/' || rota === '' ? 'inicio' : rota.startsWith('/empreendimentos') || rota.startsWith('/e/') ? 'emp' : rota.startsWith('/simulador') ? 'sim' : rota.startsWith('/simulacoes') ? 'sims' : rota.startsWith('/sobre') ? 'sobre' : rota.startsWith('/repositorio') ? 'rep' : '';
+    const chave = rota === '/' || rota === '' ? 'inicio' : rota.startsWith('/empreendimentos') || rota.startsWith('/e/') ? 'emp' : rota.startsWith('/simulador') ? 'sim' : rota.startsWith('/simulacoes') ? 'sims' : rota.startsWith('/sobre') ? 'sobre' : '';
     $$('[data-r]').forEach((a) => a.classList.toggle('ativo', a.dataset.r === chave));
     window.scrollTo(0, 0);
   }
@@ -3125,69 +3102,6 @@ main#view.emp-view { padding-top: 0; }
   }
 
   // ================= Seus dados e fontes =================
-  // ================= Repositório de apresentações =================
-  let ACERVO = null;
-  async function carregarAcervo() {
-    if (ACERVO) return ACERVO;
-    const r = await fetch('acervo/acervo.json', { cache: 'no-cache' });
-    if (!r.ok) throw new Error('Não foi possível carregar o repositório. Verifique a internet e tente de novo.');
-    ACERVO = await r.json();
-    return ACERVO;
-  }
-  const semAcento = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const urlAbs = (rel) => new URL(rel, location.href.split('#')[0]).href;
-
-  async function telaRepositorio(view) {
-    view.innerHTML = '<div class="vazio"><h3>Carregando o repositório…</h3></div>';
-    const A = await carregarAcervo();
-    const itens = A.itens;
-    const incs = [...new Set(itens.map((i) => i.incorporadora).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
-    const nArq = itens.reduce((t, i) => t + i.arquivos.filter((a) => a.arquivo).length, 0);
-    const q0 = consulta().get('q') || '';
-    view.innerHTML = `<div class="pagina-cab"><div><h1>Repositório de apresentações</h1>
-        <p>${itens.length} empreendimentos e ${nArq} materiais para abrir, baixar ou mandar ao cliente. Atualizado em ${dataBR(A.gerado_em.slice(0, 10))}.</p></div></div>
-      <div class="rep-filtros">
-        <div class="campo rep-busca"><label for="r-q">Buscar</label><input id="r-q" type="search" placeholder="Nome do empreendimento ou incorporadora" value="${esc(q0)}" autocomplete="off"></div>
-        <div class="campo"><label for="r-inc">Incorporadora</label><select id="r-inc"><option value="">Todas (${incs.length})</option>${incs.map((x) => `<option>${esc(x)}</option>`).join('')}</select></div>
-        <div class="campo"><label for="r-tipo">Material</label><select id="r-tipo"><option value="">Todos</option><option value="apres">Apresentações</option><option value="book">Books e e-books</option><option value="impl">Implantações e outros</option></select></div>
-      </div>
-      <p class="contagem rep-cont" id="r-cont" aria-live="polite"></p>
-      <div class="cards rep-cards" id="r-lista"></div>`;
-    const tipoGrupo = (t) => (/book/i.test(t) ? 'book' : /apresenta/i.test(t) ? 'apres' : 'impl');
-    const doc = (e, a) => {
-      if (!a.arquivo) return `<li class="rep-doc"><div><b>${esc(a.tipo)}</b><span>Ainda não disponível aqui</span></div></li>`;
-      const url = urlAbs(a.arquivo);
-      const msg = `*${e.nome}*${e.incorporadora ? ` (${e.incorporadora})` : ''}\n${a.tipo}: ${url}`;
-      const nomeArq = `${e.nome} - ${a.tipo}.pdf`.replace(/[\\/:*?"<>|]/g, '');
-      return `<li class="rep-doc"><div><b>${esc(a.tipo)}</b><span>${a.paginas ? `${a.paginas} páginas · ` : ''}${String(a.mb).replace('.', ',')} MB</span></div>
-        <div class="acoes"><a class="btn peq" href="${esc(a.arquivo)}" target="_blank" rel="noopener">${IC.ver}Abrir</a>
-        <a class="btn peq" href="${esc(a.arquivo)}" download="${esc(nomeArq)}" aria-label="Baixar ${esc(a.tipo)} do ${esc(e.nome)}">${IC.baixar}Baixar</a>
-        <a class="btn peq prim" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener" aria-label="Enviar ${esc(a.tipo)} do ${esc(e.nome)} pelo WhatsApp">${IC.compart}Enviar</a></div></li>`;
-    };
-    const card = (e) => {
-      const prim = e.arquivos.find((a) => a.arquivo);
-      const img = e.capa ? `<img src="${esc(e.capa)}" alt="Capa da apresentação do ${esc(e.nome)}" loading="lazy">` : '<div class="sem">Sem capa</div>';
-      return `<article class="card rep-card">
-        ${prim ? `<a class="foto" href="${esc(prim.arquivo)}" target="_blank" rel="noopener" aria-label="Abrir ${esc(prim.tipo)} do ${esc(e.nome)}">${img}` : `<div class="foto">${img}`}
-          <div class="tags">${e.pagina ? '<span class="chip escuro">Coordenação Franco</span>' : ''}${e.arquivos.length > 1 ? `<span class="chip">${e.arquivos.length} materiais</span>` : ''}</div>${prim ? '</a>' : '</div>'}
-        <div class="corpo"><h3>${esc(e.nome)}</h3><p class="onde">${esc(e.incorporadora || 'Incorporadora não informada')}</p>
-          <ul class="rep-docs">${e.arquivos.map((a) => doc(e, a)).join('')}</ul>
-          ${e.pagina ? `<a class="btn peq rep-pag" href="#/e/${esc(e.pagina)}">${IC.predio}Página completa e simulador</a>` : ''}</div></article>`;
-    };
-    const filtrar = () => {
-      const q = semAcento($('#r-q').value.trim()), inc = $('#r-inc').value, tp = $('#r-tipo').value;
-      const res = itens.filter((e) => (!q || semAcento(`${e.nome} ${e.incorporadora}`).includes(q))
-        && (!inc || e.incorporadora === inc) && (!tp || e.arquivos.some((a) => tipoGrupo(a.tipo) === tp)))
-        .sort((a, b) => (b.pagina ? 1 : 0) - (a.pagina ? 1 : 0) || (b.arquivos.some((x) => x.arquivo) ? 1 : 0) - (a.arquivos.some((x) => x.arquivo) ? 1 : 0) || a.nome.localeCompare(b.nome, 'pt'));
-      $('#r-cont').textContent = res.length === itens.length ? `${res.length} empreendimentos` : `${res.length} de ${itens.length} empreendimentos`;
-      $('#r-lista').innerHTML = res.length ? res.map(card).join('') : vazio('Nada encontrado', 'Tente outro nome ou limpe os filtros.');
-    };
-    $('#r-q').addEventListener('input', filtrar);
-    $('#r-inc').addEventListener('change', filtrar);
-    $('#r-tipo').addEventListener('change', filtrar);
-    filtrar();
-  }
-
   function telaSobre(view) {
     const c = corretor();
     view.innerHTML = `<div class="pagina-cab"><div><h1>Seus dados e fontes</h1><p>Seus dados aparecem como corretor responsável nos PDFs. Ficam só neste aparelho.</p></div></div>
