@@ -774,6 +774,10 @@ main#view.emp-view { padding-top: 0; }
 .u.livre { background: rgba(75, 227, 143, .2); color: #BFFFD9; border-color: rgba(75, 227, 143, .5); box-shadow: 0 0 14px rgba(75, 227, 143, .25); }
 .u.reserva { background: rgba(255, 200, 90, .16); color: #FFE2A3; border-color: rgba(255, 200, 90, .4); }
 .u.vendida { background: rgba(255, 255, 255, .05); color: rgba(255, 255, 255, .35); }
+.espelho3d-on #areas-filtro, .espelho3d-on #vaga-filtro, .espelho3d-on .mapa-cab, .espelho3d-on .torre-entrega, .espelho3d-on .mapa-wrap { display: none !important; }
+.espelho-embed { position: relative; width: 100%; height: min(78vh, 720px); min-height: 520px; border-radius: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: #07080C; margin: 4px 0 0; }
+.espelho-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+@media (max-width: 700px) { .espelho-embed { height: 82vh; min-height: 560px; border-radius: 14px; } }
 .u.vazio { background: transparent; border: 1px dashed rgba(255, 255, 255, .06); cursor: default; animation: none; }
 .u:not(.vazio):hover { transform: scale(1.08); z-index: 1; }
 .u.sel { outline: 2px solid #fff; outline-offset: 2px; box-shadow: 0 0 22px rgba(255, 255, 255, .35); }
@@ -2007,6 +2011,11 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   let rotaAtual = rotaInicial();
   const transicao = (fn) => { if (document.startViewTransition && !(window.FX && FX.reduzido)) { try { return document.startViewTransition(fn); } catch { /* segue sem transição */ } } return fn(); };
   const ir = (h) => { rotaAtual = String(h).replace(/^#/, ''); transicao(() => rotear()); };
+  // "Simular esta unidade" vindo do espelho 3D embutido na página
+  addEventListener('hashchange', () => {
+    const h = (location.hash || '').slice(1);
+    if (/^\/simulador\?[A-Za-z0-9=&]+$/.test(h)) { history.replaceState(null, '', location.pathname + location.search); ir(h); scrollTo(0, 0); }
+  });
   const consulta = () => new URLSearchParams(rotaAtual.split('?')[1] || '');
   document.addEventListener('click', (ev) => {
     const a = ev.target.closest('a[href^="#/"]');
@@ -2311,9 +2320,10 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
           <div class="planta-palco" id="planta-palco"></div>
         </section>` : ''}
 
-        ${uns.length ? `<section class="exp-sec revelar" id="s-unidades">
+        ${uns.length ? `<section class="exp-sec revelar${e.slug === 'smart-ape-medeiros' ? ' espelho3d-on' : ''}" id="s-unidades">
           <div class="exp-cab"><h2>Unidades</h2><span class="sec peq">Tabela ${esc(tab.versao)} de ${dataBR(tab.data_referencia)}${tab.desatualizada ? ', <b style="color:var(--ambar)">desatualizada</b>' : ''}</span></div>
-          ${e.slug === 'smart-ape-medeiros' ? `<div class="acoes" style="margin:0 0 16px"><a class="btn prim espelho3d" href="espelho.html#${esc(e.slug)}">${IC.tabela || ''}Ver espelho 3D do prédio</a><span class="sec peq">Escolha a unidade no prédio em 3D e simule direto.</span></div>` : ''}
+          ${e.slug === 'smart-ape-medeiros' ? `<div class="espelho-embed"><iframe src="espelho.html?embed=1#${esc(e.slug)}" title="Espelho de vendas 3D" loading="lazy" allow="fullscreen"></iframe></div>
+          <p class="sec peq" style="margin:8px 0 22px">Gire o prédio e toque na unidade para ver valores, sol e simular. <a href="espelho.html#${esc(e.slug)}" target="_blank" rel="noopener">Abrir em tela cheia</a></p>` : ''}
           <div class="filtro-area" id="areas-filtro" hidden><span class="rot">Metragem</span><div class="exp-pilulas" role="group" aria-label="Metragem" id="areas"></div><span class="sec peq" id="areas-res"></span></div>
           <div class="filtro-area" id="vaga-filtro" hidden style="margin-top:10px"><span class="rot">Vaga</span><div class="exp-pilulas" role="group" aria-label="Tipo de vaga" id="vagas"></div><span class="sec peq" id="vagas-res"></span></div>
           <div class="mapa-cab">

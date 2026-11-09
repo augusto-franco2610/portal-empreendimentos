@@ -118,6 +118,19 @@ a { color: inherit; }
 .ajuda { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); top: 84px; font-size: 12px; color: var(--sec); background: var(--painel); border: 1px solid var(--linha); padding: 6px 12px; border-radius: 999px; transition: opacity .6s; white-space: nowrap; }
 .ajuda.some { opacity: 0; }
 
+/* dentro da página do empreendimento (iframe) */
+.tela-cheia { display: none; }
+.embed .tela-cheia { display: inline-flex; margin-left: auto; }
+.embed #voltar, .embed .titulo p, .embed .legenda, .embed .kpi.total { display: none; }
+.embed .titulo h1 { font-size: 16px; }
+.embed .kpis { top: 64px; }
+.embed .tela-cheia { order: 2; }
+.embed .filtros { left: 18px; transform: none; max-width: calc(100% - 410px); justify-content: flex-start; }
+@media (max-width: 900px) {
+  .embed .kpis { display: none; }
+  .embed .filtros { top: 62px; max-width: none; left: 12px; }
+  .embed .ajuda { top: 112px; }
+}
 @media (max-width: 900px) {
   .topo { padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); }
   .titulo h1 { font-size: 16px; }
@@ -147,7 +160,8 @@ a { color: inherit; }
 <div id="cena" aria-label="Prédio em 3D com as unidades coloridas pelo status"></div>
 
 <header class="topo">
-  <a class="voltar" id="voltar" href="index.html">← Portal</a>
+  <a class="voltar" id="voltar" href="index.html" target="_top">← Portal</a>
+  <a class="voltar tela-cheia" id="tela-cheia" href="espelho.html#smart-ape-medeiros" target="_blank" rel="noopener">⤢ Tela cheia</a>
   <div class="titulo"><small>Espelho de vendas 3D</small><h1 id="nome">Carregando…</h1><p id="tabela-info"></p></div>
 </header>
 
@@ -213,6 +227,8 @@ const COR = { livre: 0x35D07F, reserva: 0xF5B935, vendida: 0xE5484D, fora: 0x3B3
 const andarTxt = (a) => a === '0' ? 'Térreo' : `${a}º andar`;
 const numUn = (andar, final) => andar === '0' ? `0${final}` : `${andar}${final}`;
 
+const EMBED = new URLSearchParams(location.search).has('embed');
+if (EMBED) document.documentElement.classList.add('embed');
 const slug = (location.hash || '').replace(/^#\/?/, '').split('?')[0] || 'smart-ape-medeiros';
 const cfg = CONFIG[slug];
 
@@ -241,6 +257,7 @@ function iniciar(DATA) {
   document.title = `Espelho 3D · ${emp.nome}`;
   $('#nome').textContent = emp.nome;
   $('#voltar').href = `index.html#${emp.slug}`;
+  $('#tela-cheia').href = `espelho.html#${emp.slug}`;
   const tab = emp.tabela_vigente;
   $('#tabela-info').textContent = tab ? `Tabela ${tab.versao} · ${emp.bairro || ''}${emp.cidade ? ', ' + emp.cidade : ''}` : '';
 
@@ -730,7 +747,7 @@ function iniciar(DATA) {
         <div><span>Financiamento</span><b>${f.fin}</b></div></div>` : ''}
       ${obsLimpa ? `<p class="nota">${esc(obsLimpa)}</p>` : ''}
       <div class="acoes">
-        ${st === 'livre' ? `<a class="btn prim" href="${linkSim(u)}">Simular esta unidade</a>` : `<p class="nota" style="margin:0">${st === 'reserva' ? 'Reservada ou em processo. Vale consultar a Zarin, pode voltar à venda.' : 'Unidade vendida.'}</p>`}
+        ${st === 'livre' ? `<a class="btn prim" target="_top" href="${linkSim(u)}">Simular esta unidade</a>` : `<p class="nota" style="margin:0">${st === 'reserva' ? 'Reservada ou em processo. Vale consultar a Zarin, pode voltar à venda.' : 'Unidade vendida.'}</p>`}
         ${st !== 'vendida' ? `<a class="btn zap" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(textoZap(r))}">Enviar no WhatsApp</a>` : ''}
       </div>
       ${tp.planta_url ? `<span class="rot">Planta</span><img class="planta" src="${esc(tp.planta_url)}" alt="Planta ${esc(tp.nome || '')}" loading="lazy">` : ''}
