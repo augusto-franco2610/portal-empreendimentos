@@ -738,15 +738,18 @@ function iniciar(DATA) {
         g2.fillStyle = '#DCE7EA'; g2.font = 'bold 34px Montserrat, sans-serif'; g2.textAlign = 'center'; g2.fillText('GRAN VIC', 256, 280);
         g2.fillStyle = '#6FC2B5'; g2.font = '800 64px Montserrat, sans-serif'; g2.fillText('NEXUS', 256, 345);
         const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding;
-        const fz = d / 2 + 0.06, px = -w / 2 + 6;
+        // portaria na lateral da Av. Prefeito Luís Latorre (guarita e acesso da implantação);
+        // os fundos do condomínio ficam para a Av. Armando Giassetti
+        const pg = new THREE.Group(); pg.rotation.y = -Math.PI / 2; gb.add(pg);
+        const fz = w / 2 + 0.06, px = 3.5;
         const painel = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.6), new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }));
-        painel.position.set(px + 2.4, 1.4, fz + 0.02); gb.add(painel);
-        caixa(9.5, 0.6, 0.25, mat(0x2E3133), px, 2.95, fz + 0.1, true, gb);              // faixa escura
-        caixa(3.2, 0.12, 1.6, mat(0x232527), px - 3.2, 1.75, fz + 0.8, true, gb);       // marquise
-        caixa(2.6, 1.5, 0.08, mat(0x3A3D40), px - 0.4, 0.75, fz + 0.04, false, gb);     // portão
-        caixa(2.0, 1.4, 0.06, new THREE.MeshStandardMaterial({ color: C(0xE8A55A), emissive: C(0x6B3A12), emissiveIntensity: 0.6 }), px - 3.2, 0.75, fz + 0.03, false, gb);
-        caixa(6.0, 0.1, 1.2, mat(0x5E8A4C), px + 2.2, 0.06, fz + 0.65, false, gb);      // jardim da frente
-        palmeira(cx + px + 1.2, cz + fz + 0.6);
+        painel.position.set(px + 2.4, 1.4, fz + 0.02); pg.add(painel);
+        caixa(9.5, 0.6, 0.25, mat(0x2E3133), px, 2.95, fz + 0.1, true, pg);              // faixa escura
+        caixa(3.2, 0.12, 1.6, mat(0x232527), px - 3.2, 1.75, fz + 0.8, true, pg);       // marquise
+        caixa(2.6, 1.5, 0.08, mat(0x3A3D40), px - 0.4, 0.75, fz + 0.04, false, pg);     // portão
+        caixa(2.0, 1.4, 0.06, new THREE.MeshStandardMaterial({ color: C(0xE8A55A), emissive: C(0x6B3A12), emissiveIntensity: 0.6 }), px - 3.2, 0.75, fz + 0.03, false, pg);
+        caixa(6.0, 0.1, 1.2, mat(0x5E8A4C), px + 2.2, 0.06, fz + 0.65, false, pg);      // jardim da frente
+        gb.updateMatrixWorld(true); const pp = pg.localToWorld(new THREE.Vector3(px + 1.2, 0, fz + 0.6)); palmeira(pp.x, pp.z);
       }
       return gb;
     };
