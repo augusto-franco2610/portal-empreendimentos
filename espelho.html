@@ -218,6 +218,25 @@ const CONFIG = {
     },
     plantas: [{ k: 'canto', rot: 'Canto 50 m²', finais: ['1', '2', '7', '8'] }, { k: 'meio', rot: 'Meio 47 m²', finais: ['3', '4', '5', '6'] }]
   },
+  'gran-vic-niagara': {
+    modelo: 'niagara', rotBloco: 'Torre',
+    varanda: (u) => (u && /garden/i.test(u.tipologia_nome || '') ? '🌿 Garden' : 'Varanda'),
+    extrasFixos: ['2 dorms · 1 suíte'],
+    cam: { pos: [30, 20, 34], mob: [30, 28, 46], alvo: [2, 2, 0], max: 120 },
+    // Rosa dos ventos da implantação (book da VIC, p. 16): norte para cima e à esquerda.
+    // Apto 03 olha para o leste (manhã) e 02 para o oeste (tarde); 01 fica de frente para o norte e 04 para o sul.
+    giroSol: 2.21, marcasSol: { centro: [2, 0], raio: 24 },
+    rotAndar: (a) => (a === '1' ? 'Térreo com garden' : `${Number(a) - 1}º andar`),
+    rotAndarCurto: (a) => (a === '1' ? 'Térreo' : `${Number(a) - 1}º`),
+    // 8 torres conforme a implantação; a torre 7 tem 3 pavimentos (a tabela da VIC não tem 4º pavimento nela)
+    blocos: (() => {
+      const T = (x, y, n = 4) => ({ x: (x - 1195) * 0.0348, z: (y - 540) * 0.0348, andares: ['1', '2', '3', '4'].slice(0, n), finais: ['1', '2', '3', '4'] });
+      return { 1: T(694, 295), 2: T(694, 792), 3: T(1095, 295), 4: T(1095, 792), 5: T(1465, 295), 6: T(1478, 792), 7: T(1720, 295, 3), 8: T(1732, 792) };
+    })(),
+    sol: (() => { const o = {}; ['1', '2', '3', '4', '5', '6', '7', '8'].forEach((t) => { o[t] = { manha: ['3', '4'], tarde: ['1', '2'] }; }); return o; })(),
+    solNota: { '1': 'face norte, sol boa parte do dia', '4': 'face sul' },
+    plantas: [{ k: 'gd', rot: 'Térreo garden 69 m²', tip: [1] }, { k: 'tp', rot: 'Tipo varanda 55 m²', tip: [2] }]
+  },
   'brisas-do-japi': {
     modelo: 'brisas', rotBloco: 'Torre', varanda: 'Varanda',
     // Norte da implantação do book (seta aponta para baixo à direita): a fileira de baixo
@@ -258,7 +277,7 @@ const dataBR = (iso) => iso ? iso.split('-').reverse().join('/') : '';
 const estado = (u) => !u ? 'vendida' : /dispon/i.test(u.disponibilidade || '') ? 'livre' : /reserv/i.test(u.disponibilidade || '') ? 'reserva' : 'vendida';
 const ROT_EST = { livre: 'Disponível', reserva: 'Reservada', vendida: 'Vendida', fora: 'Fora da tabela' };
 const COR = { livre: 0x35D07F, reserva: 0xF5B935, vendida: 0xE5484D, fora: 0x3B3D47, apagada: 0x22242B, amen: 0xFFB86B };
-const andarTxt = (a) => a === '0' ? 'Térreo' : `${a}º andar`;
+const andarTxt = (a) => (cfg && cfg.rotAndar ? cfg.rotAndar(a) : a === '0' ? 'Térreo' : `${a}º andar`);
 let numUn = (andar, final) => andar === '0' ? `0${final}` : `${andar}${final}`;
 const finalDe = (u) => u.final || String(Number(String(u.numero).slice(-2)));
 
@@ -307,7 +326,7 @@ function iniciar(DATA) {
   const tipPorId = Object.fromEntries((emp.tipologias || []).map((t) => [t.id, t]));
   const porChave = {};
   emp.unidades.forEach((u) => { porChave[`${u.torre}|${u.andar}|${finalDe(u)}`] = u; });
-  if (cfg.modelo === 'brisas') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
+  if (cfg.modelo === 'brisas' || cfg.modelo === 'niagara') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
   const RB = cfg.rotBloco;
 
   // ---------- filtros ----------
@@ -476,6 +495,7 @@ function iniciar(DATA) {
   let ESC = 0.4, FH = 2.88;
 
   if (cfg.modelo === 'brisas') montarBrisas();
+  else if (cfg.modelo === 'niagara') montarNiagara();
   else {
   // lote: asfalto do estacionamento, gramados e calçadas
   caixa(32, 0.06, 36.5, mat(0x3A3C40), -5.8, 0.03, 4.9, false);
@@ -657,6 +677,140 @@ function iniciar(DATA) {
   }
 
   // ======================================================================
+  // Gran Vic Niágara (VIC Engenharia, Vinhedo): 8 torres baixas, 4 aptos por andar.
+  // Posições da implantação do book (página 16); 1 px da imagem (2000 px) ~ 0,087 m.
+  // Apto 01 e 03 do lado de cima da implantação, 02 e 04 do lado de baixo.
+  // ======================================================================
+  function montarNiagara() {
+    ESC = 0.4; FH = 2.9;
+    const X = (px) => (px - 1195) * 0.0348, Z = (py) => (py - 540) * 0.0348;
+    const ret = (x0, x1, y0, y1, m, h = 0.06, y = 0.03, sombra = false) => caixa(X(x1) - X(x0), h, Z(y1) - Z(y0), m, (X(x0) + X(x1)) / 2, y, (Z(y0) + Z(y1)) / 2, sombra);
+    const asf = mat(0x45474B), grama = mat(0x4E7A3E), calc = mat(0xB9B3A6), faixa = mat(0xE8E8E8);
+    // lote, gramados de divisa e ruas
+    ret(520, 1870, 130, 955, asf);
+    ret(520, 1870, 128, 150, grama, 0.09, 0.05); ret(520, 1870, 935, 958, grama, 0.09, 0.05);
+    ret(1795, 1872, 130, 955, grama, 0.09, 0.05); ret(1600, 1620, 130, 955, grama, 0.09, 0.05);
+    ret(330, 455, -300, 1300, mat(0x2F3034));                  // Rua José Cain
+    ret(455, 520, -300, 1300, calc, 0.12, 0.06);
+    const diag = (x, y, ang) => { const m = caixa(14, 0.05, 2.6, mat(0x2F3034), X(x), 0.03, Z(y), false); m.rotation.y = ang; };
+    diag(200, 210, -0.42); diag(200, 860, 0.18);              // Raposo Tavares e Eduardo Lovato
+    // canteiros e vagas
+    [[800, 815, 160, 480], [985, 1000, 160, 480], [790, 812, 560, 930], [985, 1003, 560, 930], [1185, 1200, 150, 470], [1360, 1375, 150, 470], [1185, 1200, 560, 930], [1360, 1375, 560, 930]].forEach(([a, b, c, d]) => ret(a, b, c, d, grama, 0.09, 0.05));
+    [[830, 160, 480], [945, 160, 480], [830, 560, 930], [945, 560, 930], [1225, 150, 470], [1335, 150, 470], [1225, 560, 930], [1335, 560, 930]].forEach(([x, y0, y1]) => {
+      for (let y = y0; y <= y1; y += 27) caixa(1.4, 0.02, 0.05, faixa, X(x), 0.07, Z(y), false);
+    });
+    // guarita e mercado
+    caixa(1.6, 1.4, 1.5, mat(0xD9C9B8), X(605), 0.7, Z(590)); caixa(2.2, 0.15, 2.0, mat(0x3C3530), X(605), 1.45, Z(590));
+    caixa(4.2, 1.3, 1.3, mat(0xD9C9B8), X(700), 0.65, Z(637));
+    // lazer: deck, piscina, churrasqueira, solarium
+    ret(1600, 1795, 425, 665, mat(0xC9A27A), 0.14, 0.07);
+    ret(1722, 1777, 490, 630, new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08 }), 0.15, 0.08);
+    caixa(1.8, 1.1, 2.4, mat(0x6B5547), X(1665), 0.55, Z(565));
+    [[1640, 500], [1690, 500], [1640, 630], [1690, 630]].forEach(([x, y]) => { const g = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.05, 16), mat(0xEDE6DA)); g.position.set(X(x), 1.0, Z(y)); scene.add(g); caixa(0.06, 1.0, 0.06, mat(0x8A8A8A), X(x), 0.5, Z(y)); });
+    // árvores, palmeiras e ipês
+    [[575, 400], [575, 440], [575, 630], [575, 680], [575, 715], [1565, 460], [1565, 545], [1565, 600]].forEach(([x, y]) => palmeira(X(x), Z(y)));
+    [[490, 130], [550, 130], [640, 145], [695, 145], [750, 145], [1040, 440], [1095, 440], [1150, 440], [1415, 470], [540, 930], [1585, 720], [1585, 770], [1585, 830], [1585, 880]].forEach(([x, y]) => arvore(X(x), Z(y), 0.8));
+    for (let y = 170; y < 950; y += 45) arvore(X(1840), Z(y), 0.75);
+    for (let i = 0; i < 80; i++) { const a = rnd() * Math.PI * 2, d = 34 + rnd() * 60; const x = Math.cos(a) * d + 2, z = Math.sin(a) * d; if (x < -12 && x > -24) continue; arvore(x, z, 1.1 + rnd() * 0.9); }
+    // vizinhança
+    const telhaM = mat(0xA9553A), casaM = mat(0xE8E1D4);
+    [[-36, -12], [-38, 6], [-30, 22], [36, 22], [38, -14], [8, 26], [-6, -24], [20, -24]].forEach(([x, z], k) => {
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = (k % 3 - 1) * 0.2; g.scale.setScalar(0.7); scene.add(g);
+      caixa(7, 2.4, 5.5, casaM, 0, 1.2, 0, true, g);
+      const t = new THREE.Mesh(new THREE.ConeGeometry(5.2, 1.6, 4), telhaM); t.position.y = 3.2; t.rotation.y = Math.PI / 4; t.scale.set(1, 1, 0.75); t.castShadow = true; g.add(t);
+    });
+    // Lago Marambaia (vista citada no book), ao norte
+    const lago = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: C(0x3E7FA0), roughness: 0.15, metalness: 0.2 }));
+    lago.rotation.x = -Math.PI / 2; lago.scale.set(40, 22, 1); lago.position.copy(girar(new THREE.Vector3(0, 0.02, -95))); scene.add(lago);
+
+    // ---- torres: 4 aptos por andar em volta do núcleo (escada + elevador) ----
+    const A = 7.3, ZN = 2.2, ZE = 10.9;           // meia largura, meia faixa do núcleo, face da torre
+    const COR_N = { bege: 0xD8C7B3, bege2: 0xC9B39B, marrom: 0x6B5547, coroa: 0xBFAE9A, caixilho: 0xEDE8E1, veneziana: 0xA87A52 };
+    Object.entries(cfg.blocos).forEach(([bloco, bc]) => {
+      const g = new THREE.Group(); g.position.set(bc.x, 0, bc.z); g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
+      const NIV = bc.andares.length, B = 0.3, H = B + NIV * FH;
+      const tl = texLajes(NIV);
+      const mBege = mat(COR_N.bege, { map: tl }), mBege2 = mat(COR_N.bege2, { map: tl }), mMarrom = mat(COR_N.marrom), mCoroa = mat(COR_N.coroa);
+      const vol = (x0, x1, z0, z1, m, y0 = B, y1 = H) => caixa(x1 - x0, y1 - y0, z1 - z0, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, true, g);
+      vol(-A - 0.2, A + 0.2, -ZE - 0.2, ZE + 0.2, mat(0x9E9A92), 0, B);              // base
+      vol(-3.2, 3.2, -ZN - 0.4, ZN + 0.4, mBege2, B, H + 1.8);                         // núcleo
+      vol(-3.35, 3.35, -ZN - 0.55, ZN + 0.55, mCoroa, H + 1.8, H + 2.1);
+      const vidros = [], caixilhos = [], lajes = [], guardas = [], paineis = [], venez = [];
+      const W = (x, y, z, w, h, face, reg, painel = false, vz = false) => {
+        const n = face === '+z' ? 1 : face === '-z' ? -1 : 0, nx = face === '+x' ? 1 : face === '-x' ? -1 : 0;
+        if (painel) paineis.push([x + nx * 0.02, y - 0.1, z + n * 0.02, w + 1.3, h + 1.2, face]);
+        caixilhos.push([x + nx * 0.04, y, z + n * 0.04, w + 0.14, h + 0.14, face]);
+        vidros.push([x + nx * 0.07, y, z + n * 0.07, vz ? w * 0.42 : w, h, face, reg]);
+        if (vz) venez.push([x + nx * 0.075 + (nx ? 0 : w * 0.29), y, z + n * 0.075 + (n ? 0 : w * 0.29), w * 0.55, h, face]);
+      };
+      // posições: [final, lado x (-1/+1), lado z (-1 = cima, +1 = baixo)]
+      const pos4 = [['1', -1, -1], ['3', 1, -1], ['2', -1, 1], ['4', 1, 1]];
+      pos4.forEach(([final, sx, sz]) => {
+        // volume do apartamento com recorte da varanda/garden na lateral junto ao núcleo
+        const xIn = 0, xOut = sx * A, zIn = sz * ZN, zOut = sz * ZE, zVar = sz * (ZN + 3.0);
+        const xa = Math.min(xIn, xOut), xb = Math.max(xIn, xOut);
+        const zv0 = Math.min(zIn, zVar), zv1 = Math.max(zIn, zVar), zr0 = Math.min(zVar, zOut), zr1 = Math.max(zVar, zOut);
+        vol(xa, xb, zr0, zr1, (final === '1' || final === '4') ? mBege : mBege2);                       // parte cheia
+        const xr = sx > 0 ? [0, A - 1.7] : [-(A - 1.7), 0];
+        vol(xr[0], xr[1], zv0, zv1, mBege);                                                               // parte recuada (varanda na ponta)
+        // painel marrom vertical na quina (como no render)
+        vol(sx > 0 ? A - 0.01 : -A - 0.25, sx > 0 ? A + 0.25 : -A + 0.01, sz > 0 ? ZE - 3.2 : -ZE, sz > 0 ? ZE : -ZE + 3.2, mMarrom);
+        bc.andares.forEach((andar, k) => {
+          const y0 = B + k * FH;
+          const u = porChave[`${bloco}|${andar}|${final}`];
+          const reg = { bloco, andar, final, u, estado: estado(u), lado: sz, inst: [], grades: [] };
+          const fz = sz > 0 ? '+z' : '-z', fx = sx > 0 ? '+x' : '-x';
+          // frente: dois dormitórios com veneziana
+          W(sx * 2.0, y0 + 1.55, zOut, 1.4, 1.15, fz, reg, true, true);
+          W(sx * 5.3, y0 + 1.55, zOut, 1.2, 1.15, fz, reg, false, true);
+          // lateral: sala/cozinha
+          W(xOut, y0 + 1.5, sz * 7.8, 1.4, 1.2, fx, reg, true);
+          W(xOut, y0 + 1.85, sz * 4.9, 0.6, 0.5, fx, reg);
+          // varanda (andar de cima) ou garden (térreo) no recorte junto ao núcleo
+          const vxc = sx * (A - 0.85), vzc = sz * (ZN + 1.5);
+          W(sx * (A - 1.7), y0 + 1.1, vzc, 2.4, 2.1, fx, reg);
+          if (k === 0) {
+            caixa(2.2, 0.12, 3.0, grama, vxc + sx * 0.6, 0.08, vzc, false, g);
+            caixa(4.5, 0.12, 2.6, grama, sx * 3.5, 0.08, sz * (ZE + 1.5), false, g);
+          } else {
+            lajes.push([vxc, y0 + 0.08, vzc, 1.7, 0.16, 3.0]);
+            guardas.push([xOut, y0 + 0.65, vzc, 3.0, fx, reg]);
+          }
+          const pk = new THREE.Mesh(new THREE.BoxGeometry(A, FH - 0.1, ZE - ZN + 0.4), new THREE.MeshBasicMaterial({ visible: false }));
+          pk.position.set(sx * A / 2, y0 + FH / 2, sz * (ZE + ZN - 0.4) / 2); g.add(pk); pk.userData.reg = reg; pick.push(pk);
+          reg.pk = pk; reg.grupo = g;
+          reg.sob = [[sx * A / 2, y0 + FH / 2, sz * (ZE + ZN) / 2, A + 0.12, FH - 0.08, ZE - ZN + 0.12]];
+          unidades.push(reg);
+        });
+      });
+      vol(-A - 0.15, A + 0.15, -ZE - 0.15, ZE + 0.15, mCoroa, H, H + 0.6);       // platibanda
+      const r = rotulo(bloco); r.position.set(0, H + 6, 0); r.scale.set(7, 3.5, 1); g.add(r);
+      const plano = new THREE.PlaneGeometry(1, 1);
+      const posI = (arr, mesh, fn) => arr.forEach((a, i) => { fn(a); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); });
+      const plan = ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, hh, 1); };
+      const mPai = new THREE.InstancedMesh(plano, mMarrom, paineis.length); posI(paineis, mPai, plan); g.add(mPai);
+      const mCaix = new THREE.InstancedMesh(plano, mat(COR_N.caixilho, { roughness: 0.5 }), caixilhos.length); posI(caixilhos, mCaix, plan); g.add(mCaix);
+      const mVid = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ toneMapped: false }), vidros.length); posI(vidros, mVid, plan);
+      vidros.forEach((v, i) => { v[6].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); }); g.add(mVid);
+      if (venez.length) { const mVz = new THREE.InstancedMesh(plano, mat(COR_N.veneziana, { roughness: 0.7 }), venez.length); posI(venez, mVz, plan); g.add(mVz); }
+      const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0xEFEEEA), Math.max(lajes.length, 1));
+      posI(lajes, mLaje, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); });
+      mLaje.count = lajes.length; mLaje.castShadow = true; g.add(mLaje);
+      const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }), Math.max(guardas.length, 1));
+      posI(guardas, mGuarda, ([x, y, z, w, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, 1.1, 1); });
+      guardas.forEach((gd, i) => { gd[5].grades.push(i); mGuarda.setColorAt(i, new THREE.Color(0xffffff)); });
+      if (!guardas.length) mGuarda.setColorAt(0, new THREE.Color(0xffffff));
+      mGuarda.count = guardas.length; g.add(mGuarda);
+      const sobs = unidades.filter((x) => x.bloco === bloco).flatMap((x) => x.sob.map((b) => [b, x]));
+      const mSob = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.72, toneMapped: false, depthWrite: false }), sobs.length);
+      sobs.forEach(([[x, y, z, w, hh, d], rr], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); dummy.updateMatrix(); mSob.setMatrixAt(i, dummy.matrix); mSob.setColorAt(i, new THREE.Color(0xffffff)); rr.sobI = (rr.sobI || []).concat(i); });
+      mSob.visible = false; g.add(mSob);
+      torresInst.push({ bloco, mVid, mGuarda, mSob });
+      unidades.filter((x) => x.bloco === bloco).forEach((x) => { x.mVid = mVid; x.mGuarda = mGuarda; x.mSob = mSob; });
+    });
+  }
+
+  // ======================================================================
   // Brisas do Japi (VVC): 9 torres, garagem no térreo + 8 andares.
   // Posições e finais tirados da implantação do book da VVC (página 6).
   // Medidas em metros, a partir da implantação (1 px a 150 dpi ~ 0,15 m).
@@ -830,7 +984,7 @@ function iniciar(DATA) {
 
   // ---------- botões de filtro ----------
   const grupos = [
-    { k: 'bloco', op: [['todos', cfg.modelo === 'brisas' ? 'Todas as torres' : 'Todos os blocos'], ...Object.keys(cfg.blocos).map((b) => [b, `${RB} ${b}`])] },
+    { k: 'bloco', op: [['todos', RB === 'Torre' ? 'Todas as torres' : 'Todos os blocos'], ...Object.keys(cfg.blocos).map((b) => [b, `${RB} ${b}`])] },
     { k: 'status', op: [['todos', 'Todas'], ['livre', `Só disponíveis (${cont.livre})`]] },
     { k: 'planta', op: [['todas', 'Todas as plantas'], ...cfg.plantas.map((p) => [p.k, p.rot])] },
     cfg.sol && { k: 'sol', op: [['todos', 'Todo sol'], ['manha', '🌅 Sol da manhã'], ['tarde', '🌇 Sol da tarde']] },
@@ -883,7 +1037,7 @@ function iniciar(DATA) {
   };
   const extras = (r) => {
     const t = [], obs = r.u && r.u.observacao || '';
-    const sl = solDe(r.bloco, r.final); if (sl) t.push(`${sl === 'manha' ? '🌅' : '🌇'} ${ROT_SOL[sl]}`);
+    const sl = solDe(r.bloco, r.final); if (sl) t.push(`${sl === 'manha' ? '🌅' : '🌇'} ${ROT_SOL[sl]}${cfg.solNota && cfg.solNota[r.final] ? ' · ' + cfg.solNota[r.final] : ''}`);
     if (/PNE/i.test(obs)) t.push('♿ Unidade PNE');
     const vg = /Vaga (coberta|descoberta)/i.exec(obs); if (vg) t.push(`🚗 Vaga ${vg[1].toLowerCase()}`);
     if (r.u && r.u.entrega) t.push(`🔑 Entrega ${r.u.entrega}`);
@@ -934,8 +1088,8 @@ function iniciar(DATA) {
     const tp = tipPorId[u.tipologia_id] || {};
     const f = fluxoDe(u.observacao);
     const studio = /studio/i.test(tp.nome || u.tipologia_nome || '');
-    const tags = [studio ? 'Studio' : tp.dormitorios && `${tp.dormitorios} dorms${tp.suites ? ` · ${tp.suites} suíte` : ''}`, tp.vagas && `${tp.vagas} vaga`, cfg.varanda, ...extras(r)].filter(Boolean);
-    const obsLimpa = (u.observacao || '').split(' · ').filter((s) => !/^(Sol da|Unidade PNE|avaliação|fluxo da tabela)/i.test(s)).join(' · ');
+    const tags = [studio ? 'Studio' : tp.dormitorios && `${tp.dormitorios} dorms${tp.suites ? ` · ${tp.suites} suíte` : ''}`, tp.vagas && `${tp.vagas} vaga`, ...(cfg.extrasFixos && !tp.dormitorios ? cfg.extrasFixos : []), typeof cfg.varanda === 'function' ? cfg.varanda(u) : cfg.varanda, ...extras(r)].filter(Boolean);
+    const obsLimpa = (u.observacao || '').split(' · ').filter((s) => !/^(Sol da|Unidade PNE|avaliação)/i.test(s) && !(f && /^fluxo da tabela/i.test(s))).join(' · ');
     alvo.innerHTML = `
       <span class="chip ${st}">${ROT_EST[st]}</span>
       <h2 class="un-titulo">${RB} ${r.bloco} · Apto ${num}</h2>
@@ -975,11 +1129,11 @@ function iniciar(DATA) {
     const box = $('#grade-box'); if (!box) return;
     const bc = cfg.blocos[gradeBloco];
     const finais = bc.finais;
-    let h = `<div class="grade-cab"><span class="rot">${cfg.modelo === 'brisas' ? 'Torre' : 'Espelho do bloco'}</span><div class="grade-blocos">${Object.keys(cfg.blocos).map((b) => `<button data-gb="${b}" aria-pressed="${b === gradeBloco}">${b}</button>`).join('')}</div></div>`;
+    let h = `<div class="grade-cab"><span class="rot">${RB === 'Torre' ? 'Torre' : 'Espelho do bloco'}</span><div class="grade-blocos">${Object.keys(cfg.blocos).map((b) => `<button data-gb="${b}" aria-pressed="${b === gradeBloco}">${b}</button>`).join('')}</div></div>`;
     h += `<div class="grade${finais.length > 8 ? ' larga' : ''}" style="grid-template-columns: 40px repeat(${finais.length}, 1fr)"><span></span>${finais.map((f) => `<span class="cab">${String(f).padStart(2, '0')}</span>`).join('')}`;
     if (cfg.sol) h += `<span class="and">Sol</span>${finais.map((f) => { const sl = solDe(gradeBloco, f); return `<span class="cab sol" title="${sl ? ROT_SOL[sl] : ''}">${sl === 'manha' ? '🌅' : sl === 'tarde' ? '🌇' : ''}</span>`; }).join('')}`;
     [...bc.andares].reverse().forEach((n) => {
-      h += `<span class="and">${n === '0' ? 'Térreo' : n + 'º'}</span>`;
+      h += `<span class="and">${cfg.rotAndarCurto ? cfg.rotAndarCurto(n) : n === '0' ? 'Térreo' : n + 'º'}</span>`;
       finais.forEach((f) => {
         const r = unidades.find((x) => x.bloco === gradeBloco && x.andar === String(n) && x.final === f);
         if (!r) { h += '<span></span>'; return; }
