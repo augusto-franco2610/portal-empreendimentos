@@ -92,6 +92,10 @@ a { color: inherit; }
 .grade { display: grid; grid-template-columns: 44px repeat(8, 1fr); gap: 3px; font-family: 'JetBrains Mono', monospace; }
 .grade .cab.sol { font-size: 12px; line-height: 1; }
 .grade.larga { gap: 2px; }
+.grade-casas { display: grid; grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); gap: 3px; font-family: 'JetBrains Mono', monospace; }
+.grade-casas .c { height: 24px; border-radius: 4px; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: rgba(0,0,0,.75); }
+.grade-casas .c.livre { background: var(--livre); } .grade-casas .c.reserva { background: var(--reserva); } .grade-casas .c.vendida { background: var(--vendida); color: rgba(255,255,255,.85); }
+.grade-casas .c.apagada { opacity: .22; } .grade-casas .c.sel { outline: 2px solid #fff; outline-offset: 1px; }
 .grade.larga .c { font-size: 8.5px; height: 22px; border-radius: 4px; letter-spacing: -.02em; }
 .grade.larga .cab { font-size: 8.5px; }
 .grade .and { font-size: 10px; color: var(--sec); display: flex; align-items: center; }
@@ -218,6 +222,20 @@ const CONFIG = {
     },
     plantas: [{ k: 'canto', rot: 'Canto 50 m²', finais: ['1', '2', '7', '8'] }, { k: 'meio', rot: 'Meio 47 m²', finais: ['3', '4', '5', '6'] }]
   },
+  'villagio-dos-eucaliptos': {
+    modelo: 'villagio', rotBloco: 'Casa', varanda: 'Quintal',
+    extrasFixos: ['2 dorms · 1 suíte'],
+    nomeUn: (r) => `Casa ${r.final}`,
+    cam: { pos: [70, 95, 120], mob: [80, 130, 165], alvo: [0, 0, 4], max: 330 },
+    giroSol: 0, marcasSol: { centro: [0, 2], raio: 64 },
+    rotAndar: () => 'Sobrado', rotAndarCurto: () => '',
+    // uma única "torre" com as 266 casas; finais = número da casa
+    blocos: { Casas: { andares: ['0'], finais: Array.from({ length: 266 }, (_, i) => String(i + 1)) } },
+    // Implantação da Emccamp: sol da tarde no topo do mapa, sol da manhã embaixo (frente das casas)
+    sol: { Casas: { manha: ["1", "10", "106", "107", "108", "109", "11", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "12", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "13", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "14", "140", "141", "142", "143", "144", "145", "146", "147", "148", "149", "15", "150", "151", "152", "153", "16", "17", "18", "19", "190", "191", "192", "193", "194", "195", "196", "197", "198", "199", "2", "20", "200", "201", "202", "203", "204", "205", "206", "207", "208", "209", "21", "210", "211", "212", "213", "214", "215", "216", "217", "218", "219", "22", "220", "221", "222", "223", "224", "225", "23", "24", "25", "26", "27", "28", "29", "3", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "4", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "5", "50", "51", "52", "53", "54", "55", "56", "57", "6", "7", "8", "9"], tarde: ["100", "101", "102", "103", "104", "105", "154", "155", "156", "157", "158", "159", "160", "161", "162", "163", "164", "165", "166", "167", "168", "169", "170", "171", "172", "173", "174", "175", "176", "177", "178", "179", "180", "181", "182", "183", "184", "185", "186", "187", "188", "189", "226", "227", "228", "229", "230", "231", "232", "233", "234", "235", "236", "237", "238", "239", "240", "241", "242", "243", "244", "245", "246", "247", "248", "249", "250", "251", "252", "253", "254", "255", "256", "257", "258", "259", "260", "261", "262", "263", "264", "265", "266", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"] } },
+    solSufixo: 'na frente da casa',
+    plantas: [{ k: 'sb', rot: 'Sobrado 58 m²', tip: [12] }, { k: 'pcd', rot: 'Casa PCD 50 m²', tip: [13] }]
+  },
   'gran-vic-nexus': {
     modelo: 'nexus', rotBloco: 'Torre', varanda: 'Varanda gourmet',
     extrasFixos: ['2 dorms'],
@@ -286,6 +304,8 @@ Object.values(CONFIG).forEach((c) => Object.values(c.blocos).forEach((bc) => {
   if (!bc.finais) bc.finais = [...(bc.norte || []), ...(bc.sul || []), ...(bc.cima || []), ...(bc.baixo || [])].filter(Boolean).sort((a, b) => a - b);
 }));
 
+// Casas do Villagio: [número, x, y na implantação numerada da Emccamp, fileira]
+const CASAS_VILLAGIO = [[1,252,388,"A"],[2,277,381,"A"],[3,298,371,"A"],[4,320,368,"A"],[5,344,367,"A"],[6,369,359,"A"],[7,402,357,"A"],[8,426,354,"A"],[9,450,348,"A"],[10,472,343,"A"],[11,497,339,"A"],[12,521,331,"A"],[13,556,331,"A"],[14,579,322,"A"],[15,602,321,"A"],[16,625,313,"A"],[17,649,309,"A"],[18,673,306,"A"],[19,715,302,"A"],[20,737,300,"A"],[21,759,299,"A"],[22,780,296,"A"],[23,806,294,"A"],[24,831,291,"A"],[25,869,291,"A"],[26,892,290,"A"],[27,914,289,"A"],[28,936,288,"A"],[29,958,286,"A"],[30,985,286,"A"],[31,1020,285,"A"],[32,1042,286,"A"],[33,1065,284,"A"],[34,1088,283,"A"],[35,1111,284,"A"],[36,1136,283,"A"],[37,1172,282,"A"],[38,1196,282,"A"],[39,1219,281,"A"],[40,1243,280,"A"],[41,1268,278,"A"],[42,1292,277,"A"],[43,1329,273,"A"],[44,1351,270,"A"],[45,1377,270,"A"],[46,1400,269,"A"],[47,1423,267,"A"],[48,1445,267,"A"],[49,1483,268,"A"],[50,1508,266,"A"],[51,1532,267,"A"],[52,1555,266,"A"],[53,1577,264,"A"],[54,1599,262,"A"],[55,1637,261,"A"],[56,1661,261,"A"],[57,1685,260,"A"],[58,1608,424,"B"],[59,1583,425,"B"],[60,1560,426,"B"],[61,1536,426,"B"],[62,1513,428,"B"],[63,1491,429,"B"],[64,1455,430,"B"],[65,1431,431,"B"],[66,1408,433,"B"],[67,1384,434,"B"],[68,1358,434,"B"],[69,1336,436,"B"],[70,1299,437,"B"],[71,1277,438,"B"],[72,1253,440,"B"],[73,1231,440,"B"],[74,1206,439,"B"],[75,1184,441,"B"],[76,1145,444,"B"],[77,1122,444,"B"],[78,1097,445,"B"],[79,1075,445,"B"],[80,1051,446,"B"],[81,1030,447,"B"],[82,990,451,"B"],[83,968,449,"B"],[84,943,450,"B"],[85,919,451,"B"],[86,896,453,"B"],[87,875,455,"B"],[88,840,458,"B"],[89,817,460,"B"],[90,794,462,"B"],[91,769,461,"B"],[92,747,462,"B"],[93,725,466,"B"],[94,660,472,"B"],[95,639,478,"B"],[96,617,482,"B"],[97,591,490,"B"],[98,569,492,"B"],[99,545,496,"B"],[100,509,503,"B"],[101,483,506,"B"],[102,458,512,"B"],[103,436,517,"B"],[104,415,522,"B"],[105,392,530,"B"],[106,406,599,"C"],[107,432,590,"C"],[108,456,585,"C"],[109,480,579,"C"],[110,503,573,"C"],[111,526,568,"C"],[112,556,565,"C"],[113,578,562,"C"],[114,602,556,"C"],[115,625,554,"C"],[116,650,549,"C"],[117,674,547,"C"],[118,728,544,"C"],[119,750,544,"C"],[120,774,544,"C"],[121,795,544,"C"],[122,821,544,"C"],[123,845,542,"C"],[124,881,537,"C"],[125,905,538,"C"],[126,929,538,"C"],[127,952,536,"C"],[128,973,532,"C"],[129,995,534,"C"],[130,1034,532,"C"],[131,1058,533,"C"],[132,1081,532,"C"],[133,1103,532,"C"],[134,1125,529,"C"],[135,1149,530,"C"],[136,1188,523,"C"],[137,1210,523,"C"],[138,1232,520,"C"],[139,1254,522,"C"],[140,1281,519,"C"],[141,1302,519,"C"],[142,1342,518,"C"],[143,1364,515,"C"],[144,1386,515,"C"],[145,1408,515,"C"],[146,1431,513,"C"],[147,1455,513,"C"],[148,1495,511,"C"],[149,1517,511,"C"],[150,1542,510,"C"],[151,1563,508,"C"],[152,1586,507,"C"],[153,1611,507,"C"],[154,1614,669,"D"],[155,1592,673,"D"],[156,1569,673,"D"],[157,1548,675,"D"],[158,1525,675,"D"],[159,1502,678,"D"],[160,1464,677,"D"],[161,1441,680,"D"],[162,1419,681,"D"],[163,1394,684,"D"],[164,1369,682,"D"],[165,1347,686,"D"],[166,1310,685,"D"],[167,1286,684,"D"],[168,1264,686,"D"],[169,1241,689,"D"],[170,1219,688,"D"],[171,1198,690,"D"],[172,1159,691,"D"],[173,1136,691,"D"],[174,1115,692,"D"],[175,1090,692,"D"],[176,1067,693,"D"],[177,1042,693,"D"],[178,1005,695,"D"],[179,980,695,"D"],[180,956,696,"D"],[181,933,699,"D"],[182,911,698,"D"],[183,887,700,"D"],[184,850,702,"D"],[185,824,705,"D"],[186,804,706,"D"],[187,781,708,"D"],[188,761,711,"D"],[189,737,712,"D"],[190,740,783,"E"],[191,761,788,"E"],[192,784,787,"E"],[193,808,785,"E"],[194,832,785,"E"],[195,855,784,"E"],[196,890,785,"E"],[197,914,783,"E"],[198,938,782,"E"],[199,960,782,"E"],[200,982,781,"E"],[201,1006,781,"E"],[202,1044,780,"E"],[203,1066,778,"E"],[204,1087,776,"E"],[205,1113,773,"E"],[206,1135,770,"E"],[207,1161,769,"E"],[208,1197,770,"E"],[209,1221,768,"E"],[210,1246,765,"E"],[211,1269,766,"E"],[212,1292,765,"E"],[213,1314,763,"E"],[214,1353,765,"E"],[215,1375,764,"E"],[216,1397,764,"E"],[217,1423,761,"E"],[218,1448,760,"E"],[219,1471,758,"E"],[220,1506,757,"E"],[221,1527,757,"E"],[222,1548,754,"E"],[223,1573,755,"E"],[224,1597,755,"E"],[225,1619,753,"E"],[226,1562,919,"F"],[227,1535,919,"F"],[228,1514,920,"F"],[229,1479,921,"F"],[230,1454,920,"F"],[231,1430,924,"F"],[232,1407,924,"F"],[233,1383,926,"F"],[234,1359,927,"F"],[235,1321,929,"F"],[236,1295,930,"F"],[237,1274,931,"F"],[238,1252,932,"F"],[239,1231,934,"F"],[240,1208,935,"F"],[241,1168,934,"F"],[242,1145,937,"F"],[243,1124,936,"F"],[244,1100,940,"F"],[245,1075,941,"F"],[246,1053,941,"F"],[247,1016,945,"F"],[248,989,943,"F"],[249,968,944,"F"],[250,943,947,"F"],[251,919,948,"F"],[252,897,948,"F"],[253,860,951,"F"],[254,838,950,"F"],[255,814,954,"F"],[256,791,953,"F"],[257,765,955,"F"],[258,743,954,"F"],[259,638,749,"G"],[260,589,756,"G"],[261,554,762,"G"],[262,509,769,"G"],[263,472,772,"G"],[264,426,782,"G"],[265,393,792,"G"],[266,344,794,"G"]];
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const R = (v) => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -298,7 +318,7 @@ const ROT_EST = { livre: 'Disponível', reserva: 'Reservada', vendida: 'Vendida'
 const COR = { livre: 0x35D07F, reserva: 0xF5B935, vendida: 0xE5484D, fora: 0x3B3D47, apagada: 0x22242B, amen: 0xFFB86B };
 const andarTxt = (a) => (cfg && cfg.rotAndar ? cfg.rotAndar(a) : a === '0' ? 'Térreo' : `${a}º andar`);
 let numUn = (andar, final) => andar === '0' ? `0${final}` : `${andar}${final}`;
-const finalDe = (u) => u.final || String(Number(String(u.numero).slice(-2)));
+const finalDe = (u) => (u.casa ? String(u.numero) : u.final || String(Number(String(u.numero).slice(-2))));
 
 const EMBED = new URLSearchParams(location.search).has('embed');
 if (EMBED) document.documentElement.classList.add('embed');
@@ -344,7 +364,8 @@ function iniciar(DATA) {
 
   const tipPorId = Object.fromEntries((emp.tipologias || []).map((t) => [t.id, t]));
   const porChave = {};
-  emp.unidades.forEach((u) => { porChave[`${u.torre}|${u.andar}|${finalDe(u)}`] = u; });
+  emp.unidades.forEach((u) => { porChave[`${u.torre}|${u.andar ?? '0'}|${finalDe(u)}`] = u; });
+  const nomeUn = (r) => (cfg.nomeUn ? cfg.nomeUn(r) : `${RB} ${r.bloco} · Apto ${numUn(r.andar, r.final)}`);
   if (cfg.modelo === 'brisas' || cfg.modelo === 'niagara' || cfg.modelo === 'nexus') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
   const RB = cfg.rotBloco;
 
@@ -516,6 +537,7 @@ function iniciar(DATA) {
   if (cfg.modelo === 'brisas') montarBrisas();
   else if (cfg.modelo === 'niagara') montarNiagara();
   else if (cfg.modelo === 'nexus') montarNexus();
+  else if (cfg.modelo === 'villagio') montarVillagio();
   else {
   // lote: asfalto do estacionamento, gramados e calçadas
   caixa(32, 0.06, 36.5, mat(0x3A3C40), -5.8, 0.03, 4.9, false);
@@ -694,6 +716,105 @@ function iniciar(DATA) {
     torresInst.push({ bloco, mVid, mGuarda, mSob });
     unidades.filter((r) => r.bloco === bloco).forEach((r) => { r.mVid = mVid; r.mGuarda = mGuarda; r.mSob = mSob; });
   });
+  }
+
+  // ======================================================================
+  // Villagio dos Eucaliptos (Emccamp): 266 sobrados em fileiras.
+  // Posição e número de cada casa tirados da implantação numerada da Emccamp
+  // (enviada pelo Franco em 09/11/2026). Sol da tarde no topo do mapa, sol da manhã embaixo.
+  // ======================================================================
+  function montarVillagio() {
+    ESC = 1; FH = 2.6;
+    const S = 0.104, X = (px) => (px - 1000) * S, Z = (py) => (py - 650) * S;
+    Object.assign(sol.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, far: 300 }); sol.shadow.camera.updateProjectionMatrix();
+    sol.position.multiplyScalar(2.2);
+    const grama = mat(0x4E7A3E), asfM = mat(0x55585D), calc = mat(0xB9B3A6);
+    // lote
+    const lote = [[80, 330], [180, 318], [700, 270], [1000, 250], [1700, 130], [1770, 230], [1850, 420], [1880, 700], [1700, 900], [1590, 1180], [330, 1200]];
+    const sh = new THREE.Shape(lote.map(([x, y]) => new THREE.Vector2(X(x), -Z(y))));
+    const loteM = new THREE.Mesh(new THREE.ShapeGeometry(sh), mat(0x507F40)); loteM.rotation.x = -Math.PI / 2; loteM.position.y = 0.03; loteM.receiveShadow = true; scene.add(loteM);
+    // vias (polilinhas da implantação)
+    const via = (pts, larg, m, y = 0.06) => {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+        const a = new THREE.Vector3(X(x0), 0, Z(y0)), b = new THREE.Vector3(X(x1), 0, Z(y1));
+        const len = a.distanceTo(b) + larg * 0.9, mid = a.clone().add(b).multiplyScalar(0.5);
+        const v = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, larg), m);
+        v.position.set(mid.x, y, mid.z); v.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x); v.receiveShadow = true; scene.add(v);
+      }
+    };
+    via([[250, 590], [300, 520], [360, 475], [560, 430], [720, 395], [1000, 372], [1500, 352], [1660, 348], [1710, 362], [1730, 395], [1712, 430], [1660, 440]], 2.6, asfM);
+    via([[250, 600], [330, 640], [450, 662], [700, 640], [1640, 605], [1680, 625], [1695, 680], [1695, 800], [1675, 845], [1630, 865], [720, 885], [680, 860], [668, 800], [680, 700], [720, 662]], 2.6, asfM);
+    via([[730, 330], [730, 620]], 0, asfM);
+    via([[80, 330], [150, 700], [230, 1000], [330, 1215]], 3.4, mat(0x2F3034), 0.05);             // R. Primo Porcari
+    via([[330, 1218], [1580, 1218]], 3.4, mat(0x2F3034), 0.05);                                    // R. Alfredo Abaid
+    via([[190, 600], [255, 600]], 2.4, asfM);
+    // portaria, salão de festas e lazer
+    caixa(1.8, 1.5, 2.6, mat(0xD8D3CA), X(268), 0.75, Z(590)); caixa(2.4, 0.15, 3.0, mat(0x5C4A3A), X(268), 1.58, Z(590));
+    caixa(4.6, 1.5, 3.4, mat(0xD8D3CA), X(300), 0.75, Z(705)); caixa(5.0, 0.15, 3.8, mat(0x3E3A36), X(300), 1.58, Z(705));
+    caixa(X(1755) - X(1660), 0.1, Z(510) - Z(460), mat(0x5FA04A), (X(1660) + X(1755)) / 2, 0.08, (Z(460) + Z(510)) / 2, false);
+    const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08 });
+    caixa(3.6, 0.12, 6.0, mat(0xE2DCCD), X(1735), 0.07, Z(625), false); caixa(2.4, 0.13, 4.2, agua, X(1735), 0.08, Z(620), false);
+    [[1680, 552], [1740, 556], [1785, 548]].forEach(([x, y]) => caixa(2.6, 1.3, 2.0, mat(0xD8D3CA), X(x), 0.65, Z(y)));
+    caixa(2.2, 1.0, 2.0, mat(0x6B5547), X(1790), 0.5, Z(482));
+    // árvores: perímetro, área verde preservada (sul) e entorno
+    for (let i = 0; i < lote.length - 1; i++) { const [x0, y0] = lote[i], [x1, y1] = lote[i + 1]; const n = Math.round(Math.hypot(x1 - x0, y1 - y0) / 60); for (let j = 0; j < n; j++) { const t = j / n; arvore(X(x0 + (x1 - x0) * t), Z(y0 + (y1 - y0) * t), 1.0 + rnd() * 0.6); } }
+    for (let i = 0; i < 110; i++) { const x = 760 + rnd() * 820, y = 1000 + rnd() * 170; arvore(X(x), Z(y), 1.2 + rnd() * 0.9); }
+    for (let i = 0; i < 40; i++) { const x = 1590 + rnd() * 250, y = 650 + rnd() * 450; if (x < 1880) arvore(X(x), Z(y), 1.2 + rnd() * 0.9); }
+    for (let i = 0; i < 120; i++) { const a = rnd() * Math.PI * 2, d = 120 + rnd() * 110; arvore(Math.cos(a) * d, Math.sin(a) * d * 0.8, 1.4 + rnd()); }
+    // Serra do Japi a oeste (esquerda do mapa)
+    [[-260, 60, 120, 30, 70], [-280, -80, 140, 38, 90]].forEach(([x, z, sx, sy, sz]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10), new THREE.MeshStandardMaterial({ color: C(0x3E5A4A), roughness: 1, flatShading: true })); m.position.set(x, -sy * 0.15, z); m.scale.set(sx, sy, sz); scene.add(m); });
+
+    // ---- casas ----
+    const porFila = {};
+    CASAS_VILLAGIO.forEach((c) => { (porFila[c[3]] = porFila[c[3]] || []).push(c); });
+    const frenteDesce = { A: true, C: true, E: true, B: false, D: false, F: false, G: false };   // frente para baixo no mapa = sol da manhã
+    const g = new THREE.Group(); scene.add(g); blocosGrupo.Casas = g;
+    const W = 2.25, D = 3.9, H = 2.6;
+    const corpos = [], tetos = [], janelas = [], muros = [];
+    const q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+    Object.entries(porFila).forEach(([fila, lista]) => {
+      lista.sort((a, b) => a[1] - b[1]);
+      lista.forEach((c, i) => {
+        const [num, px, py] = c;
+        const a = lista[Math.max(0, i - 1)], b = lista[Math.min(lista.length - 1, i + 1)];
+        const tx = X(b[1]) - X(a[1]), tz = Z(b[2]) - Z(a[2]);
+        let nx = -tz, nz = tx; const l = Math.hypot(nx, nz) || 1; nx /= l; nz /= l;
+        if ((nz > 0) !== frenteDesce[fila]) { nx = -nx; nz = -nz; }
+        const ang = Math.atan2(nx, nz);
+        const x = X(px), z = Z(py);
+        const u = porChave[`Casas|0|${num}`];
+        const reg = { bloco: 'Casas', andar: '0', final: String(num), u, estado: estado(u), lado: nz > 0 ? 1 : -1, inst: [], grades: [], normal: new THREE.Vector3(nx, 0, nz) };
+        const put = (arr, lx, ly, lz, sx, sy, sz, extra) => { const p = new THREE.Vector3(lx, ly, lz).applyAxisAngle(up, ang); arr.push([x + p.x, ly, z + p.z, sx, sy, sz, ang, extra]); };
+        put(corpos, 0, H / 2, 0, W - 0.06, H, D, num % 2);
+        put(tetos, 0, H + 0.12, 0, W + 0.04, 0.24, D + 0.1);
+        put(muros, 0, 0.3, D / 2 + 2.4, W - 0.1, 0.6, 0.12);
+        // janelas e porta na frente, janela no fundo (coloridas pelo status)
+        put(janelas, -0.45, H * 0.72, D / 2 + 0.03, 0.9, 0.55, 1, reg); put(janelas, 0.5, H * 0.72, D / 2 + 0.03, 0.6, 0.55, 1, reg);
+        put(janelas, -0.45, H * 0.28, D / 2 + 0.03, 1.0, 0.7, 1, reg); put(janelas, 0.62, H * 0.3, D / 2 + 0.03, 0.55, 0.95, 1, reg);
+        put(janelas, 0, H * 0.72, -D / 2 - 0.03, 0.9, 0.55, -1, reg);
+        const pk = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ visible: false }));
+        pk.position.set(x, H / 2, z); pk.rotation.y = ang; g.add(pk); pk.userData.reg = reg; pick.push(pk);
+        reg.pk = pk; reg.grupo = g; reg.sob = [[x, H / 2, z, W + 0.1, H + 0.1, D + 0.1, ang]];
+        unidades.push(reg);
+      });
+    });
+    const inst = (geo, m, arr, fn) => { const im = new THREE.InstancedMesh(geo, m, arr.length); arr.forEach((a, i) => { fn(a, i); dummy.updateMatrix(); im.setMatrixAt(i, dummy.matrix); }); g.add(im); return im; };
+    const box = new THREE.BoxGeometry(1, 1, 1), plano = new THREE.PlaneGeometry(1, 1);
+    const mCorpo = inst(box, mat(0xFFFFFF, { roughness: 0.9 }), corpos, ([x, y, z, sx, sy, sz, a, alt], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, a, 0); dummy.scale.set(sx, sy, sz); });
+    corpos.forEach((c, i) => mCorpo.setColorAt(i, C(c[7] ? 0xE9E4DA : 0xDCD5C8))); mCorpo.castShadow = mCorpo.receiveShadow = true;
+    const mTeto = inst(box, mat(0x8E9093), tetos, ([x, y, z, sx, sy, sz, a]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, a, 0); dummy.scale.set(sx, sy, sz); }); mTeto.castShadow = true;
+    inst(box, mat(0xB8B2A6), muros, ([x, y, z, sx, sy, sz, a]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, a, 0); dummy.scale.set(sx, sy, sz); });
+    const mVid = inst(plano, new THREE.MeshBasicMaterial({ toneMapped: false }), janelas, ([x, y, z, sx, sy, f, a]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, a + (f < 0 ? Math.PI : 0), 0); dummy.scale.set(sx, sy, 1); });
+    janelas.forEach((j, i) => { j[7].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); });
+    const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial(), 1); mGuarda.count = 0; mGuarda.setColorAt(0, new THREE.Color(1, 1, 1)); g.add(mGuarda);
+    const sobs = unidades.flatMap((r) => r.sob.map((s) => [s, r]));
+    const mSob = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.8, toneMapped: false, depthWrite: false }), sobs.length);
+    sobs.forEach(([[x, y, z, w, hh, d, a], r], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, a, 0); dummy.scale.set(w, hh, d); dummy.updateMatrix(); mSob.setMatrixAt(i, dummy.matrix); mSob.setColorAt(i, new THREE.Color(1, 1, 1)); r.sobI = [i]; });
+    mSob.visible = false; g.add(mSob);
+    torresInst.push({ bloco: 'Casas', mVid, mGuarda, mSob });
+    unidades.forEach((r) => { r.mVid = mVid; r.mGuarda = mGuarda; r.mSob = mSob; });
+    cfg.fileiras = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((f) => ({ f, casas: porFila[f].map((c) => String(c[0])).sort((a, b) => a - b) }));
   }
 
   // ======================================================================
@@ -1269,11 +1390,11 @@ function iniciar(DATA) {
 
   // ---------- botões de filtro ----------
   const grupos = [
-    { k: 'bloco', op: [['todos', RB === 'Torre' ? 'Todas as torres' : 'Todos os blocos'], ...Object.keys(cfg.blocos).map((b) => [b, `${RB} ${b}`])] },
+    Object.keys(cfg.blocos).length > 1 && { k: 'bloco', op: [['todos', RB === 'Torre' ? 'Todas as torres' : 'Todos os blocos'], ...Object.keys(cfg.blocos).map((b) => [b, `${RB} ${b}`])] },
     { k: 'status', op: [['todos', 'Todas'], ['livre', `Só disponíveis (${cont.livre})`]] },
     { k: 'planta', op: [['todas', 'Todas as plantas'], ...cfg.plantas.map((p) => [p.k, p.rot])] },
     cfg.sol && { k: 'sol', op: [['todos', 'Todo sol'], ['manha', '🌅 Sol da manhã'], ['tarde', '🌇 Sol da tarde']] },
-    { k: 'cor', op: [['fachada', 'Apartamento colorido'], ['janelas', 'Só janelas']] }
+    { k: 'cor', op: [['fachada', cfg.modelo === 'villagio' ? 'Casa colorida' : 'Apartamento colorido'], ['janelas', 'Só janelas']] }
   ];
   filtro.cor = 'fachada';
   $('#filtros').innerHTML = grupos.filter(Boolean).map((gr) => `<div class="grupo" role="group">${gr.op.map(([v, t]) => `<button data-k="${gr.k}" data-v="${v}" aria-pressed="${filtro[gr.k] === v}">${esc(t)}</button>`).join('')}</div>`).join('');
@@ -1309,8 +1430,8 @@ function iniciar(DATA) {
     const bc = cfg.blocos[r.bloco];
     const p = r.centro.clone();
     const lado = r.lado;
-    const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : 1);
-    if (r.normal) { camAlvo = { pos: p.clone().add(r.normal.clone().multiplyScalar(dist)).add(new THREE.Vector3(0, 3, 0)), alvo: p.clone() }; return; }
+    const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : cfg.modelo === 'villagio' ? 1.5 : 1);
+    if (r.normal) { camAlvo = { pos: p.clone().add(r.normal.clone().multiplyScalar(dist)).add(new THREE.Vector3(0, cfg.modelo === 'villagio' ? 12 : 3, 0)), alvo: p.clone() }; return; }
     camAlvo = { pos: new THREE.Vector3(p.x * 0.6 + 6, Math.max(p.y + 3, 4), p.z + lado * dist), alvo: p.clone() };
   }
 
@@ -1323,7 +1444,7 @@ function iniciar(DATA) {
   };
   const extras = (r) => {
     const t = [], obs = r.u && r.u.observacao || '';
-    const sl = solDe(r.bloco, r.final); if (sl) t.push(`${sl === 'manha' ? '🌅' : '🌇'} ${ROT_SOL[sl]}${cfg.solNota && cfg.solNota[r.final] ? ' · ' + cfg.solNota[r.final] : ''}`);
+    const sl = solDe(r.bloco, r.final); if (sl) t.push(`${sl === 'manha' ? '🌅' : '🌇'} ${ROT_SOL[sl]}${cfg.solNota && cfg.solNota[r.final] ? ' · ' + cfg.solNota[r.final] : cfg.solSufixo ? ' ' + cfg.solSufixo : ''}`);
     if (/PNE/i.test(obs)) t.push('♿ Unidade PNE');
     const vg = /Vaga (coberta|descoberta)/i.exec(obs); if (vg) t.push(`🚗 Vaga ${vg[1].toLowerCase()}`);
     if (r.u && r.u.entrega) t.push(`🔑 Entrega ${r.u.entrega}`);
@@ -1335,7 +1456,7 @@ function iniciar(DATA) {
   function textoZap(r) {
     const u = r.u, tp = tipPorId[u.tipologia_id] || {}, f = fluxoDe(u.observacao);
     return [
-      `*${emp.nome}* · ${RB} ${r.bloco}, apto ${numUn(r.andar, r.final)} (${andarTxt(r.andar).toLowerCase()})`,
+      `*${emp.nome}* · ${nomeUn(r)} (${andarTxt(r.andar).toLowerCase()})`,
       `${tp.nome ? tp.nome.replace(/\s*\(.*\)/, '') + ' · ' : ''}${u.area ? m2(u.area) : ''}${tp.dormitorios ? ` · ${tp.dormitorios} dorms (${tp.suites || 0} suíte)` : ''}${tp.vagas ? ` · ${tp.vagas} vaga` : ''}`,
       extras(r).join(' · '),
       u.preco ? `Valor de tabela: *${R(u.preco)}*` : '',
@@ -1366,7 +1487,7 @@ function iniciar(DATA) {
     }
     const u = r.u, st = r.estado, num = numUn(r.andar, r.final);
     if (!u) {
-      alvo.innerHTML = `<span class="chip vendida">Vendida</span><h2 class="un-titulo">${RB} ${r.bloco} · Apto ${num}</h2>
+      alvo.innerHTML = `<span class="chip vendida">Vendida</span><h2 class="un-titulo">${nomeUn(r)}</h2>
         <p class="un-sub">${andarTxt(r.andar)} · final ${String(r.final).padStart(2, '0')}</p>
         <p class="nota">Não está na tabela atual da Zarin, por isso aparece como vendida.</p><div id="grade-box"></div>`;
       desenharGrade(); abrirPainel(); return;
@@ -1378,7 +1499,7 @@ function iniciar(DATA) {
     const obsLimpa = (u.observacao || '').split(' · ').filter((s) => !/^(Sol da|Unidade PNE|avaliação)/i.test(s) && !(f && /^fluxo da tabela/i.test(s))).join(' · ');
     alvo.innerHTML = `
       <span class="chip ${st}">${ROT_EST[st]}</span>
-      <h2 class="un-titulo">${RB} ${r.bloco} · Apto ${num}</h2>
+      <h2 class="un-titulo">${nomeUn(r)}</h2>
       <p class="un-sub">${esc((tp.nome || u.tipologia_nome || '').replace(/\s*\(.*\)/, ''))}${u.area ? ' · ' + m2(u.area) : ''} · ${andarTxt(r.andar)}</p>
       <div class="tags">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       ${u.preco ? `<div class="preco">${R(u.preco)}</div>` : '<div class="preco" style="font-size:20px">Sem preço na tabela</div>'}
@@ -1404,8 +1525,8 @@ function iniciar(DATA) {
     $('#painel-rolagem').innerHTML = `
       <span class="chip livre">${cont.livre} disponíveis</span>
       <h2 class="un-titulo">Escolha a unidade</h2>
-      <p class="vazio-msg">Toque numa janela do prédio ou num quadrado da grade. <b>Verde</b> está à venda, <b>amarelo</b> reservada e <b>vermelho</b> vendida.</p>
-      ${top ? `<div class="acoes"><button class="btn" id="mais-barata">Ver a mais em conta: ${RB} ${top.bloco} · ${numUn(top.andar, top.final)} · ${Rk(top.u.preco)}</button></div>` : ''}
+      <p class="vazio-msg">${cfg.modelo === 'villagio' ? 'Toque numa casa ou no número dela na lista.' : 'Toque numa janela do prédio ou num quadrado da grade.'} <b>Verde</b> está à venda, <b>amarelo</b> reservada e <b>vermelho</b> vendida.</p>
+      ${top ? `<div class="acoes"><button class="btn" id="mais-barata">Ver a mais em conta: ${nomeUn(top)} · ${Rk(top.u.preco)}</button></div>` : ''}
       <div id="grade-box"></div>`;
     const mb = $('#mais-barata'); if (mb) mb.onclick = () => { mostrar(top); abrirPainel(); };
     desenharGrade();
@@ -1413,6 +1534,24 @@ function iniciar(DATA) {
 
   function desenharGrade() {
     const box = $('#grade-box'); if (!box) return;
+    if (cfg.fileiras) {
+      let h = '<div class="grade-cab"><span class="rot">Casas por fileira</span></div>';
+      cfg.fileiras.forEach((fl, k) => {
+        h += `<p class="mpeq sec" style="margin:10px 0 4px;font-size:11px">Fileira ${k + 1} · casas ${fl.casas[0]} a ${fl.casas[fl.casas.length - 1]}</p><div class="grade-casas">`;
+        fl.casas.forEach((f) => {
+          const r = unidades.find((x) => x.final === f); if (!r) return;
+          const pr = r.u && r.u.preco ? Rk(r.u.preco) : '';
+          h += `<button class="c ${r.estado}${r.ok === false ? ' apagada' : ''}${selecionada === r ? ' sel' : ''}" data-b="${r.bloco}" data-a="${r.andar}" data-f="${r.final}" title="Casa ${f} · ${ROT_EST[r.estado]}${pr ? ' · ' + pr : ''}">${f}</button>`;
+        });
+        h += '</div>';
+      });
+      box.innerHTML = h;
+      box.querySelectorAll('button.c').forEach((b) => b.onclick = () => {
+        const r = unidades.find((x) => x.bloco === b.dataset.b && x.andar === b.dataset.a && x.final === b.dataset.f);
+        if (r) { mostrar(r); $('#painel-rolagem').scrollTop = 0; if (mobile()) abrirPainel(); }
+      });
+      return;
+    }
     const bc = cfg.blocos[gradeBloco];
     const finais = bc.finais;
     let h = `<div class="grade-cab"><span class="rot">${RB === 'Torre' ? 'Torre' : 'Espelho do bloco'}</span><div class="grade-blocos">${Object.keys(cfg.blocos).map((b) => `<button data-gb="${b}" aria-pressed="${b === gradeBloco}">${b}</button>`).join('')}</div></div>`;
@@ -1469,7 +1608,7 @@ function iniciar(DATA) {
     if (r) {
       pintar(r, 0.4);
       const u = r.u;
-      dica.innerHTML = r.amen ? `<b>${esc(r.amen)}</b>` : `<b>${RB} ${r.bloco} · Apto ${numUn(r.andar, r.final)}</b><br>${u && u.area ? m2(u.area) + ' · ' : ''}${ROT_EST[r.estado]}${solDe(r.bloco, r.final) ? ' · ' + ROT_SOL[solDe(r.bloco, r.final)].toLowerCase() : ''}${u && u.preco && r.estado !== 'vendida' ? `<br><em>${R(u.preco)}</em>` : ''}`;
+      dica.innerHTML = r.amen ? `<b>${esc(r.amen)}</b>` : `<b>${nomeUn(r)}</b><br>${u && u.area ? m2(u.area) + ' · ' : ''}${ROT_EST[r.estado]}${solDe(r.bloco, r.final) ? ' · ' + ROT_SOL[solDe(r.bloco, r.final)].toLowerCase() : ''}${u && u.preco && r.estado !== 'vendida' ? `<br><em>${R(u.preco)}</em>` : ''}`;
       dica.style.left = ev.clientX + 14 + 'px'; dica.style.top = ev.clientY + 14 + 'px'; dica.classList.add('on');
     } else dica.classList.remove('on');
   });

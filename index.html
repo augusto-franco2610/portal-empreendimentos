@@ -1999,7 +1999,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   const urlEmp = (slug) => (DATA.url ? `${DATA.url}#${slug}` : '');
 
   // Empreendimentos com espelho de vendas 3D (espelho.html)
-  const ESPELHO3D = ['smart-ape-medeiros', 'brisas-do-japi', 'gran-vic-niagara', 'gran-vic-nexus'];
+  const ESPELHO3D = ['smart-ape-medeiros', 'brisas-do-japi', 'gran-vic-niagara', 'gran-vic-nexus', 'villagio-dos-eucaliptos'];
   function rotaInicial() {
     const h = (location.hash || '').slice(1);
     if (/^\/simulador\?[A-Za-z0-9=&]+$/.test(h)) return h; // vindo do espelho 3D
