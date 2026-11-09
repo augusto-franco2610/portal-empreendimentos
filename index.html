@@ -1996,6 +1996,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
 
   function rotaInicial() {
     const h = (location.hash || '').slice(1);
+    if (/^\/simulador\?[A-Za-z0-9=&]+$/.test(h)) return h; // vindo do espelho 3D
     if (!/^[A-Za-z0-9._~-]+$/.test(h)) return '/';
     if (h === 'simulador') return '/simulador';
     if (h === 'salvas') return '/simulacoes';
@@ -2277,6 +2278,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
             <div class="exp-preco"><span>${esc(fp.v)}</span>${fp.n || e.preco_fonte ? `<small>${esc(e.preco_fonte || fp.n)}</small>` : ''}</div>
             <div class="acoes">
               <a class="btn prim" href="#/simulador?emp=${e.id}">${IC.calc}Simular financiamento</a>
+              ${e.slug === 'smart-ape-medeiros' ? `<a class="btn espelho3d" href="espelho.html#${esc(e.slug)}">Espelho 3D</a>` : ''}
               ${e.apresentacao ? `<button class="btn" data-baixar="${e.apresentacao.id}">${IC.baixar}Baixar apresentação</button>` : ''}
               ${linkPag ? `<button class="btn" id="copiar">${IC.link}Copiar link</button>` : ''}
             </div>
@@ -2311,6 +2313,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
 
         ${uns.length ? `<section class="exp-sec revelar" id="s-unidades">
           <div class="exp-cab"><h2>Unidades</h2><span class="sec peq">Tabela ${esc(tab.versao)} de ${dataBR(tab.data_referencia)}${tab.desatualizada ? ', <b style="color:var(--ambar)">desatualizada</b>' : ''}</span></div>
+          ${e.slug === 'smart-ape-medeiros' ? `<div class="acoes" style="margin:0 0 16px"><a class="btn prim espelho3d" href="espelho.html#${esc(e.slug)}">${IC.tabela || ''}Ver espelho 3D do prédio</a><span class="sec peq">Escolha a unidade no prédio em 3D e simule direto.</span></div>` : ''}
           <div class="filtro-area" id="areas-filtro" hidden><span class="rot">Metragem</span><div class="exp-pilulas" role="group" aria-label="Metragem" id="areas"></div><span class="sec peq" id="areas-res"></span></div>
           <div class="filtro-area" id="vaga-filtro" hidden style="margin-top:10px"><span class="rot">Vaga</span><div class="exp-pilulas" role="group" aria-label="Tipo de vaga" id="vagas"></div><span class="sec peq" id="vagas-res"></span></div>
           <div class="mapa-cab">
