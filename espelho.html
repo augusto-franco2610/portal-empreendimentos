@@ -706,13 +706,60 @@ function iniciar(DATA) {
     const X = (px) => (px - 1050) * 0.0272, Z = (py) => (py - 560) * 0.0272;
     const ret = (x0, x1, y0, y1, m, h = 0.06, y = 0.03, sombra = false) => caixa(X(x1) - X(x0), h, Z(y1) - Z(y0), m, (X(x0) + X(x1)) / 2, y, (Z(y0) + Z(y1)) / 2, sombra);
     const asf = mat(0x47494D), grama = mat(0x4E7A3E), calc = mat(0xB9B3A6), faixa = mat(0xE8E8E8);
+    // Edifício garagem (fotos aéreas da VIC): as torres e o lazer ficam sobre um embasamento
+    // de 3 níveis de garagem, cinza, com aberturas horizontais escuras em cada nível.
+    const NG = 3, PG = NG * 3.0 * ESC;                                // níveis e altura do embasamento
+    const texGaragem = (niv, rep) => {
+      const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128 * niv;
+      const g2 = cv.getContext('2d'); g2.fillStyle = '#B9BBBD'; g2.fillRect(0, 0, cv.width, cv.height);
+      for (let k = 0; k < niv; k++) {
+        const y = k * 128; g2.fillStyle = '#3A3D42'; g2.fillRect(0, y + 34, 512, 62);
+        g2.fillStyle = '#A3A6A9'; for (let x = 0; x < 512; x += 64) g2.fillRect(x, y + 34, 7, 62);
+        g2.fillStyle = 'rgba(0,0,0,.18)'; g2.fillRect(0, y + 124, 512, 4);
+      }
+      const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.wrapS = THREE.RepeatWrapping; t.repeat.set(rep, 1); t.anisotropy = 4; return t;
+    };
+    const embasamento = (cx, cz, w, d, giro, comPortaria) => {
+      const gb = new THREE.Group(); gb.position.set(cx, 0, cz); gb.rotation.y = giro; scene.add(gb);
+      const mF = new THREE.MeshStandardMaterial({ map: texGaragem(NG, Math.max(1, Math.round(w / 6))), roughness: 0.9 });
+      const mL = new THREE.MeshStandardMaterial({ map: texGaragem(NG, Math.max(1, Math.round(d / 6))), roughness: 0.9 });
+      const corpo = new THREE.Mesh(new THREE.BoxGeometry(w, PG, d), [mL, mL, mat(0x8F9194), mat(0x9A9C9F), mF, mF]);
+      corpo.position.y = PG / 2; corpo.castShadow = corpo.receiveShadow = true; gb.add(corpo);
+      caixa(w + 0.2, 0.25, d + 0.2, mat(0x8E9093), 0, PG + 0.12, 0, true, gb);          // platibanda / laje do lazer
+      if (comPortaria) {
+        // portaria (render da VIC): faixa escura, painel de madeira em espinha de peixe com o logo, marquise e portão
+        const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512;
+        const g2 = cv.getContext('2d'); g2.fillStyle = '#A0703F'; g2.fillRect(0, 0, 512, 512);
+        for (let y = -512; y < 1024; y += 28) for (let x = 0; x < 512; x += 56) {
+          g2.fillStyle = (Math.floor(y / 28) + x / 56) % 2 ? '#B9834C' : '#8E5F33';
+          g2.save(); g2.translate(x, y); g2.rotate(((x / 56) % 2 ? 1 : -1) * Math.PI / 4); g2.fillRect(0, 0, 40, 14); g2.restore();
+        }
+        g2.fillStyle = '#6FB7C9'; for (let i = 0; i < 5; i++) g2.fillRect(196, 150 + i * 16, 120, 9);
+        g2.fillStyle = '#DCE7EA'; g2.font = 'bold 34px Montserrat, sans-serif'; g2.textAlign = 'center'; g2.fillText('GRAN VIC', 256, 280);
+        g2.fillStyle = '#6FC2B5'; g2.font = '800 64px Montserrat, sans-serif'; g2.fillText('NEXUS', 256, 345);
+        const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding;
+        const fz = d / 2 + 0.06, px = -w / 2 + 6;
+        const painel = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.6), new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }));
+        painel.position.set(px + 2.4, 1.4, fz + 0.02); gb.add(painel);
+        caixa(9.5, 0.6, 0.25, mat(0x2E3133), px, 2.95, fz + 0.1, true, gb);              // faixa escura
+        caixa(3.2, 0.12, 1.6, mat(0x232527), px - 3.2, 1.75, fz + 0.8, true, gb);       // marquise
+        caixa(2.6, 1.5, 0.08, mat(0x3A3D40), px - 0.4, 0.75, fz + 0.04, false, gb);     // portão
+        caixa(2.0, 1.4, 0.06, new THREE.MeshStandardMaterial({ color: C(0xE8A55A), emissive: C(0x6B3A12), emissiveIntensity: 0.6 }), px - 3.2, 0.75, fz + 0.03, false, gb);
+        caixa(6.0, 0.1, 1.2, mat(0x5E8A4C), px + 2.2, 0.06, fz + 0.65, false, gb);      // jardim da frente
+        palmeira(cx + px + 1.2, cz + fz + 0.6);
+      }
+      return gb;
+    };
     ret(270, 1990, 185, 915, asf);                                   // estacionamentos e acessos
     ret(110, 620, 190, 640, asf);
     ret(110, 260, 190, 640, grama, 0.09, 0.05);
-    ret(655, 1470, 185, 760, grama, 0.09, 0.05);                     // área ajardinada do condomínio
+    const nLazer0 = scene.children.length;
+    ret(655, 1470, 185, 760, grama, 0.09, 0.05);                     // área ajardinada do condomínio (sobre a garagem)
+    const nLazer1 = scene.children.length;
     ret(420, 620, -100, 700, mat(0x2F3034));                         // Av. Prefeito Luís Latorre
     ret(270, 1990, 915, 960, calc, 0.12, 0.06);
     ret(270, 1990, 960, 1060, mat(0x2F3034));
+    const nLazer2 = scene.children.length;
     // caminhos internos
     ret(720, 1440, 330, 360, calc, 0.1, 0.06); ret(700, 1440, 600, 630, calc, 0.1, 0.06); ret(1060, 1100, 360, 600, calc, 0.1, 0.06);
     // lazer: quadra gramada, playground, academia, espaço gourmet, pet, redário, caixas d'água
@@ -724,6 +771,9 @@ function iniciar(DATA) {
     caixa(2.0, 0.12, 1.4, mat(0x3C4247), X(1000), 1.4, Z(275)); [[960, 255], [1040, 255], [960, 300], [1040, 300]].forEach(([x, y]) => caixa(0.1, 1.4, 0.1, mat(0x8A8A8A), X(x), 0.7, Z(y)));
     ret(1330, 1440, 520, 640, mat(0xC9B79F), 0.12, 0.07);
     [[690, 520], [690, 600]].forEach(([x, y]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 1.6, 20), mat(0xE5E5E2)); c.position.set(X(x), 0.8, Z(y)); c.castShadow = true; scene.add(c); });
+    const nLazer3 = scene.children.length;
+    [...scene.children.slice(nLazer0, nLazer1), ...scene.children.slice(nLazer2, nLazer3)].forEach((o) => { o.position.y += PG + 0.2; });
+    embasamento(X(1062), Z(472), X(1480) - X(645), Z(770) - Z(175), 0, true);
     // vagas
     for (let x = 300; x < 1540; x += 32) { caixa(0.05, 0.02, 1.6, faixa, X(x), 0.07, Z(740), false); caixa(0.05, 0.02, 1.6, faixa, X(x), 0.07, Z(880), false); }
     for (let y = 280; y < 900; y += 34) { caixa(1.6, 0.02, 0.05, faixa, X(1500), 0.07, Z(y), false); caixa(1.6, 0.02, 0.05, faixa, X(1660), 0.07, Z(y), false); caixa(1.6, 0.02, 0.05, faixa, X(1880), 0.07, Z(y), false); }
@@ -731,7 +781,9 @@ function iniciar(DATA) {
     caixa(2.2, 1.5, 1.6, mat(0xC8B49C), X(400), 0.75, Z(600)); caixa(2.8, 0.15, 2.1, mat(0x3C4247), X(400), 1.55, Z(600));
     caixa(2.2, 1.5, 1.6, mat(0xC8B49C), X(1900), 0.75, Z(860));
     // árvores
+    const nArv0 = scene.children.length;
     [[790, 200], [850, 200], [1215, 200], [1300, 200], [1400, 235], [700, 380], [745, 280], [1100, 470], [1440, 460], [1440, 540], [1440, 620], [990, 840], [780, 860], [300, 700], [400, 700], [520, 700], [300, 850], [660, 660], [700, 650]].forEach(([x, y], i) => arvore(X(x), Z(y), 0.8 + (i % 3) * 0.15));
+    scene.children.slice(nArv0).forEach((o) => { if (o.position.x > X(645) && o.position.x < X(1480) && o.position.z > Z(175) && o.position.z < Z(770)) o.position.y += PG + 0.2; });
     // ---- entorno conforme a foto aérea da apresentação (Av. Armando Giassetti, 170) ----
     // Gran Vic Lumen e Gran Vic Pulse ao lado (mesmo padrão de torre, faixa verde e rosa),
     // galpões industriais na frente, Rod. Anhanguera com trevo e a cidade de Jundiaí ao fundo.
@@ -744,7 +796,7 @@ function iniciar(DATA) {
       const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
     };
     const torreVizinha = (cx, cz, giro, andares, corFaixa) => {
-      const g2 = new THREE.Group(); g2.position.set(cx, 0, cz); g2.rotation.y = giro; scene.add(g2);
+      const g2 = new THREE.Group(); g2.position.set(cx, PG + 0.2, cz); g2.rotation.y = giro; scene.add(g2);
       const h = 0.16 + andares * FH * ESC, w = 7.0, d = 5.2;
       const mJ = new THREE.MeshStandardMaterial({ map: texJanelas(6, andares), roughness: 0.9 });
       const corpo = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [mJ, mJ, mat(0xD8D6D1), mat(0xD8D6D1), mJ, mJ]);
@@ -758,8 +810,9 @@ function iniciar(DATA) {
     const conj = (cx, cz, cor, nome) => {
       const c = Math.cos(-0.446), s = Math.sin(-0.446);
       offs.forEach(([ox, oz, n]) => torreVizinha(cx + ox * c + oz * s, cz - ox * s + oz * c, -0.446, n, cor));
-      caixa(19, 0.1, 15, mat(0x4E7A3E), cx, 0.06, cz, false);
-      const p = placa(nome, 'VIC Engenharia', '#FFFFFF'); p.position.set(cx, 22, cz); p.scale.set(11, 3.4, 1);
+      embasamento(cx, cz, 19, 15, -0.446, false);
+      const gm = caixa(17, 0.1, 13, mat(0x4E7A3E), cx, PG + 0.3, cz, false); gm.rotation.y = -0.446;
+      const p = placa(nome, 'VIC Engenharia', '#FFFFFF'); p.position.set(cx, 22 + PG, cz); p.scale.set(11, 3.4, 1);
     };
     conj(19, -6, 0x6FA86A, 'Gran Vic Lumen');
     conj(35, -12, 0xD98C98, 'Gran Vic Pulse');
@@ -826,7 +879,7 @@ function iniciar(DATA) {
     const XE = NX + UX;                       // ponta da torre
     const COR_X = { taupe: 0xC9B6A0, cinza: 0x8E9093, ocre: 0xD8A13E, coroa: 0x7C7E82, caixilho: 0xEFEFED };
     Object.entries(cfg.blocos).forEach(([bloco, bc]) => {
-      const g = new THREE.Group(); g.position.set(bc.x, 0, bc.z); g.rotation.y = bc.giro; g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
+      const g = new THREE.Group(); g.position.set(bc.x, PG + 0.2, bc.z); g.rotation.y = bc.giro; g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
       const NIV = bc.andares.length, B = 0.4, H = B + NIV * FH;
       const tl = texLajes(NIV);
       const mTaupe = mat(COR_X.taupe, { map: tl }), mCinza = mat(COR_X.cinza, { map: tl }), mOcre = mat(COR_X.ocre), mCoroa = mat(COR_X.coroa);
