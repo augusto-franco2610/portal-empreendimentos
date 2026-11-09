@@ -158,7 +158,6 @@ a { color: inherit; }
   <span><i style="background:var(--livre)"></i>Disponível</span>
   <span><i style="background:var(--reserva)"></i>Reservada</span>
   <span><i style="background:var(--vendida)"></i>Vendida</span>
-  <span><i style="background:var(--fora)"></i>Fora da tabela</span>
 </div>
 
 <aside class="painel" id="painel">
@@ -207,7 +206,8 @@ const R = (v) => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigi
 const Rk = (v) => 'R$ ' + (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' mil';
 const m2 = (a) => String(a).replace('.', ',') + ' m²';
 const dataBR = (iso) => iso ? iso.split('-').reverse().join('/') : '';
-const estado = (u) => !u ? 'fora' : /dispon/i.test(u.disponibilidade || '') ? 'livre' : /reserv/i.test(u.disponibilidade || '') ? 'reserva' : 'vendida';
+// Unidade que não está na tabela = vendida (regra do Franco)
+const estado = (u) => !u ? 'vendida' : /dispon/i.test(u.disponibilidade || '') ? 'livre' : /reserv/i.test(u.disponibilidade || '') ? 'reserva' : 'vendida';
 const ROT_EST = { livre: 'Disponível', reserva: 'Reservada', vendida: 'Vendida', fora: 'Fora da tabela' };
 const COR = { livre: 0x35D07F, reserva: 0xF5B935, vendida: 0xE5484D, fora: 0x3B3D47, apagada: 0x22242B, amen: 0xFFB86B };
 const andarTxt = (a) => a === '0' ? 'Térreo' : `${a}º andar`;
@@ -575,7 +575,7 @@ function iniciar(DATA) {
     g.add(mCorr);
     // sobreposição de status
     const sobs = unidades.filter((r) => r.bloco === bloco).flatMap((r) => r.sob.map((b) => [b, r]));
-    const mSob = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.62, toneMapped: false, depthWrite: false }), sobs.length);
+    const mSob = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.72, toneMapped: false, depthWrite: false }), sobs.length);
     sobs.forEach(([[x, y, z, w, hh, d], r], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); dummy.updateMatrix(); mSob.setMatrixAt(i, dummy.matrix); mSob.setColorAt(i, new THREE.Color(0xffffff)); r.sobI = (r.sobI || []).concat(i); });
     mSob.visible = false; g.add(mSob);
     torresInst.push({ bloco, mVid, mGuarda, mSob });
@@ -591,7 +591,7 @@ function iniciar(DATA) {
   const selBase = new THREE.Vector3(1, 1, 1);
 
   // ---------- cores ----------
-  let modoCor = 'janelas';
+  let modoCor = 'fachada';
   const corBase = (r) => C(r.ok === false ? COR.apagada : COR[r.estado]);
   function pintar(r, realce = 0) {
     const c = corBase(r);
@@ -619,9 +619,9 @@ function iniciar(DATA) {
     { k: 'status', op: [['todos', 'Todas'], ['livre', `Só disponíveis (${cont.livre})`]] },
     { k: 'planta', op: [['todas', 'Todas as plantas'], ...cfg.plantas.map((p) => [p.k, p.rot])] },
     { k: 'sol', op: [['todos', 'Todo sol'], ['manha', '🌅 Sol da manhã'], ['tarde', '🌇 Sol da tarde']] },
-    { k: 'cor', op: [['janelas', 'Cor nas janelas'], ['fachada', 'Cor na fachada']] }
+    { k: 'cor', op: [['fachada', 'Apartamento colorido'], ['janelas', 'Só janelas']] }
   ];
-  filtro.cor = 'janelas';
+  filtro.cor = 'fachada';
   $('#filtros').innerHTML = grupos.map((gr) => `<div class="grupo" role="group">${gr.op.map(([v, t]) => `<button data-k="${gr.k}" data-v="${v}" aria-pressed="${filtro[gr.k] === v}">${esc(t)}</button>`).join('')}</div>`).join('');
   $('#filtros').addEventListener('click', (ev) => {
     const b = ev.target.closest('button'); if (!b) return;
@@ -708,9 +708,9 @@ function iniciar(DATA) {
     }
     const u = r.u, st = r.estado, num = numUn(r.andar, r.final);
     if (!u) {
-      alvo.innerHTML = `<span class="chip fora">Fora da tabela</span><h2 class="un-titulo">Bloco ${r.bloco} · Apto ${num}</h2>
+      alvo.innerHTML = `<span class="chip vendida">Vendida</span><h2 class="un-titulo">Bloco ${r.bloco} · Apto ${num}</h2>
         <p class="un-sub">${andarTxt(r.andar)} · final 0${r.final}</p>
-        <p class="nota">Esta unidade não aparece na tabela atual da Zarin (normalmente já vendida). Confirme com a construtora.</p><div id="grade-box"></div>`;
+        <p class="nota">Não está na tabela atual da Zarin, por isso aparece como vendida.</p><div id="grade-box"></div>`;
       desenharGrade(); abrirPainel(); return;
     }
     const tp = tipPorId[u.tipologia_id] || {};
