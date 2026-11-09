@@ -221,7 +221,7 @@ const CONFIG = {
   'gran-vic-nexus': {
     modelo: 'nexus', rotBloco: 'Torre', varanda: 'Varanda gourmet',
     extrasFixos: ['2 dorms'],
-    cam: { pos: [-22, 52, 82], mob: [-26, 70, 112], alvo: [30, 4, -8], max: 260 },
+    cam: { pos: [-22, 46, 70], mob: [-26, 62, 98], alvo: [22, 5, -6], max: 260 },
     // Rosa dos ventos da implantação (apresentação da VIC, p. 14): norte para cima e à direita.
     // 01 e 03 ficam para o leste (manhã), 02 e 04 para o oeste (tarde); 01 com frente para o norte, 04 para o sul.
     giroSol: 0.785, marcasSol: { centro: [0, 0], raio: 26 },
@@ -754,16 +754,15 @@ function iniciar(DATA) {
       caixa(2.0, 1.2, 1.6, mat(0xC9C7C2), 0, h + 0.6, 0, true, g2);
       caixa(w + 0.2, 0.3, d + 0.2, mat(0x9A9B9E), 0, h + 0.15, 0, true, g2);
     };
-    const offs = [[5.2, -3.6, 15], [4.8, 4.2, 15], [-5.2, -4.0, 14], [-5.6, 4.0, 14]];
+    const offs = [[4.6, -3.4, 15], [4.4, 3.8, 15], [-4.6, -3.6, 14], [-4.9, 3.6, 14]];
     const conj = (cx, cz, cor, nome) => {
       const c = Math.cos(-0.446), s = Math.sin(-0.446);
       offs.forEach(([ox, oz, n]) => torreVizinha(cx + ox * c + oz * s, cz - ox * s + oz * c, -0.446, n, cor));
-      caixa(22, 0.08, 18, mat(0x4E7A3E), cx, 0.04, cz, false);
+      caixa(19, 0.1, 15, mat(0x4E7A3E), cx, 0.06, cz, false);
       const p = placa(nome, 'VIC Engenharia', '#FFFFFF'); p.position.set(cx, 22, cz); p.scale.set(11, 3.4, 1);
     };
-    conj(38, -4, 0x6FA86A, 'Gran Vic Lumen');
-    conj(58, -8, 0xD98C98, 'Gran Vic Pulse');
-    caixa(46, 0.06, 26, mat(0x47494D), 48, 0.03, -6, false);
+    conj(19, -6, 0x6FA86A, 'Gran Vic Lumen');
+    conj(35, -12, 0xD98C98, 'Gran Vic Pulse');
 
     // galpões industriais na frente (do outro lado da Av. Armando Giassetti)
     const galpao = (x, z, w, d, h, giro = 0) => {
@@ -811,7 +810,7 @@ function iniciar(DATA) {
     // árvores (sem cair na rodovia, nos galpões ou nos condomínios vizinhos)
     for (let i = 0; i < 70; i++) {
       const a = rnd() * Math.PI * 2, d = 32 + rnd() * 70; const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if ((x > 76 && x < 160) || (z > 9 && z < 32 && x > -40 && x < 30) || (x > 28 && x < 76 && z > -16 && z < 10) || (x < -26 && z > -32 && z < 32)) continue;
+      if ((x > 76 && x < 160) || (z > 9 && z < 32 && x > -40 && x < 30) || (x > 12 && x < 60 && z > -26 && z < 4) || (x < -26 && z > -32 && z < 32)) continue;
       arvore(x, z, 1.0 + rnd() * 0.8);
     }
     // cidade de Jundiaí ao fundo (centro, Maxi Shopping)
