@@ -221,7 +221,7 @@ const CONFIG = {
   'gran-vic-nexus': {
     modelo: 'nexus', rotBloco: 'Torre', varanda: 'Varanda gourmet',
     extrasFixos: ['2 dorms'],
-    cam: { pos: [66, 34, -2], mob: [88, 50, -4], alvo: [4, 5, -12], max: 260 },
+    cam: { pos: [78, 40, 22], mob: [98, 56, 26], alvo: [4, 5, 9], max: 260 },
     // Rosa dos ventos da implantação (apresentação da VIC, p. 14): norte para cima e à direita.
     // 01 e 03 ficam para o leste (manhã), 02 e 04 para o oeste (tarde); 01 com frente para o norte, 04 para o sul.
     giroSol: 0.785, marcasSol: { centro: [0, 0], raio: 26 },
@@ -765,8 +765,7 @@ function iniciar(DATA) {
     ret(2010, 2250, -1600, 1700, mat(0x2F3034));
     ret(1990, 2010, -1600, 1700, calc, 0.12, 0.06); ret(2250, 2270, -1600, 1700, calc, 0.12, 0.06);
     for (let y = -1550; y < 1650; y += 70) caixa(0.16, 0.02, 1.6, faixa, X(2130), 0.08, Z(y), false);
-    ret(270, 1990, 915, 960, calc, 0.12, 0.06);
-    ret(270, 1990, 960, 1060, mat(0x2F3034));
+
     const nLazer2 = scene.children.length;
     // caminhos internos
     ret(720, 1440, 330, 360, calc, 0.1, 0.06); ret(700, 1440, 600, 630, calc, 0.1, 0.06); ret(1060, 1100, 360, 600, calc, 0.1, 0.06);
@@ -823,14 +822,15 @@ function iniciar(DATA) {
       const p = placa(nome, 'VIC Engenharia', '#FFFFFF'); p.position.set(cx, 22 + PG, cz); p.scale.set(11, 3.4, 1);
     };
     // Lumen e Pulse colados ao Nexus ao longo da Av. Prefeito Luís Latorre
-    const zN = Z(175);                                                   // divisa norte do Nexus
-    conj(X(1062), zN - 8.4, 0x6FA86A, 'Gran Vic Lumen');
-    conj(X(1062), zN - 25.0, 0xD98C98, 'Gran Vic Pulse');
+    // ordem ao longo da avenida: Pulse, Lumen e Nexus (Lumen e Pulse ao sul do Nexus)
+    const zS = Z(770);                                                   // divisa sul do Nexus
+    conj(X(1062), zS + 8.6, 0x6FA86A, 'Gran Vic Lumen');
+    conj(X(1062), zS + 25.2, 0xD98C98, 'Gran Vic Pulse');
     // as três portarias uma ao lado da outra, coladas, junto à divisa Nexus/Lumen
     const xf = X(1480) + 0.05;
-    portaria(xf, zN + 1.8, 'Nexus', '#6FC2B5');
-    portaria(xf, zN - 1.6, 'Lumen', '#9C7BE0');
-    portaria(xf, zN - 5.0, 'Pulse', '#F08A5D');
+    portaria(xf, zS - 1.8, 'Nexus', '#6FC2B5');
+    portaria(xf, zS + 1.6, 'Lumen', '#9C7BE0');
+    portaria(xf, zS + 5.0, 'Pulse', '#F08A5D');
 
     // galpões industriais na frente (do outro lado da Av. Armando Giassetti)
     const galpao = (x, z, w, d, h, giro = 0) => {
@@ -839,14 +839,14 @@ function iniciar(DATA) {
       for (let i = 0; i < Math.floor(w / 4); i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, d + 0.2), mat(0xB9BCC0)); t.position.set(-w / 2 + 2 + i * 4, h + 0.25, 0); t.rotation.z = 0.12; t.castShadow = true; g2.add(t); }
       caixa(w, 0.9, 0.2, mat(0x5E6B78), 0, h - 0.6, d / 2 + 0.1, false, g2);
     };
-    galpao(-10, 24, 24, 10, 4.2, -0.12); galpao(16, 22, 16, 9, 3.6, -0.18); galpao(-32, 20, 14, 9, 3.4, -0.1);
-    caixa(70, 0.05, 20, mat(0x55575B), -2, 0.025, 23, false);
+    galpao(-2, -24, 24, 10, 4.2, -0.12); galpao(22, -26, 14, 9, 3.6, -0.18); galpao(-30, -40, 14, 9, 3.4, -0.1);
+    caixa(64, 0.05, 18, mat(0x55575B), 2, 0.025, -26, false);
     // placas com o nome das avenidas
-    const pl1 = placa('AV. PREF. LUÍS LATORRE', 'frente · portaria', '#FFD27A'); pl1.position.set(X(2130), 6.5, 2); pl1.scale.set(12, 3.75, 1);
+    const pl1 = placa('AV. PREF. LUÍS LATORRE', 'frente · portaria', '#FFD27A'); pl1.position.set(X(2130), 6.5, -6); pl1.scale.set(12, 3.75, 1);
     const pl2 = placa('AV. ARMANDO GIASSETTI', 'fundos do condomínio', '#C9D2DC'); pl2.position.set(X(510), 7.5, -20); pl2.scale.set(12, 3.75, 1);
     // Av. Armando Giassetti até a rodovia
-    caixa(150, 0.05, 2.8, mat(0x2F3034), 15, 0.04, 12.2, false);
-    for (let i = 0; i < 28; i++) caixa(2.0, 0.02, 0.14, mat(0xEDEDED), -55 + i * 5, 0.08, 12.2, false);
+    caixa(150, 0.05, 2.8, mat(0x2F3034), 15, 0.04, -14.5, false);
+    for (let i = 0; i < 28; i++) caixa(2.0, 0.02, 0.14, mat(0xEDEDED), -55 + i * 5, 0.08, -14.5, false);
 
     // Rod. Anhanguera (2 pistas) com trevo e passarela
     const pista = mat(0x2B2C30), canteiro = mat(0x5E8A4C);
@@ -881,7 +881,7 @@ function iniciar(DATA) {
     // árvores (sem cair na rodovia, nos galpões ou nos condomínios vizinhos)
     for (let i = 0; i < 70; i++) {
       const a = rnd() * Math.PI * 2, d = 32 + rnd() * 70; const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if ((x > 76 && x < 160) || (z > 9 && z < 32 && x > -40 && x < 30) || (x > -14 && x < 16 && z > -46 && z < -9) || (x > 24 && x < 36) || (x < -26 && z > -32 && z < 32)) continue;
+      if ((x > 76 && x < 160) || (z > -36 && z < -12 && x > -40 && x < 34) || (x > -14 && x < 16 && z > 4 && z < 42) || (x > 24 && x < 36) || (x < -26 && z > -32 && z < 32)) continue;
       arvore(x, z, 1.0 + rnd() * 0.8);
     }
     // cidade de Jundiaí ao fundo (centro, Maxi Shopping)
