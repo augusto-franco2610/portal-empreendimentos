@@ -221,7 +221,7 @@ const CONFIG = {
   'gran-vic-nexus': {
     modelo: 'nexus', rotBloco: 'Torre', varanda: 'Varanda gourmet',
     extrasFixos: ['2 dorms'],
-    cam: { pos: [-62, 34, 20], mob: [-82, 50, 30], alvo: [10, 6, -4], max: 260 },
+    cam: { pos: [64, 30, -26], mob: [84, 46, -34], alvo: [6, 5, 0], max: 260 },
     // Rosa dos ventos da implantação (apresentação da VIC, p. 14): norte para cima e à direita.
     // 01 e 03 ficam para o leste (manhã), 02 e 04 para o oeste (tarde); 01 com frente para o norte, 04 para o sul.
     giroSol: 0.785, marcasSol: { centro: [0, 0], raio: 26 },
@@ -740,8 +740,8 @@ function iniciar(DATA) {
         const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding;
         // portaria na lateral da Av. Prefeito Luís Latorre (guarita e acesso da implantação);
         // os fundos do condomínio ficam para a Av. Armando Giassetti
-        const pg = new THREE.Group(); pg.rotation.y = -Math.PI / 2; gb.add(pg);
-        const fz = w / 2 + 0.06, px = 3.5;
+        const pg = new THREE.Group(); pg.rotation.y = Math.PI / 2; gb.add(pg);
+        const fz = w / 2 + 0.06, px = -4;
         const painel = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.6), new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }));
         painel.position.set(px + 2.4, 1.4, fz + 0.02); pg.add(painel);
         caixa(9.5, 0.6, 0.25, mat(0x2E3133), px, 2.95, fz + 0.1, true, pg);              // faixa escura
@@ -759,10 +759,14 @@ function iniciar(DATA) {
     const nLazer0 = scene.children.length;
     ret(655, 1470, 185, 760, grama, 0.09, 0.05);                     // área ajardinada do condomínio (sobre a garagem)
     const nLazer1 = scene.children.length;
-    // Av. Prefeito Luís Latorre: frente do condomínio (portaria e acesso)
+    // Av. Armando Giassetti: fundos do condomínio (lado das Torres 3 e 4)
     ret(400, 620, -1600, 1700, mat(0x2F3034));
     ret(380, 400, -1600, 1700, calc, 0.12, 0.06); ret(620, 640, -1600, 920, calc, 0.12, 0.06);
     for (let y = -1550; y < 1650; y += 70) caixa(0.16, 0.02, 1.6, faixa, X(510), 0.08, Z(y), false);
+    // Av. Prefeito Luís Latorre: frente do condomínio, diante dos finais 01 e 03 das Torres 1 e 2
+    ret(2010, 2250, -1600, 1700, mat(0x2F3034));
+    ret(1990, 2010, -1600, 1700, calc, 0.12, 0.06); ret(2250, 2270, -1600, 1700, calc, 0.12, 0.06);
+    for (let y = -1550; y < 1650; y += 70) caixa(0.16, 0.02, 1.6, faixa, X(2130), 0.08, Z(y), false);
     ret(270, 1990, 915, 960, calc, 0.12, 0.06);
     ret(270, 1990, 960, 1060, mat(0x2F3034));
     const nLazer2 = scene.children.length;
@@ -820,8 +824,8 @@ function iniciar(DATA) {
       const gm = caixa(17, 0.1, 13, mat(0x4E7A3E), cx, PG + 0.3, cz, false); gm.rotation.y = -0.446;
       const p = placa(nome, 'VIC Engenharia', '#FFFFFF'); p.position.set(cx, 22 + PG, cz); p.scale.set(11, 3.4, 1);
     };
-    conj(19, -6, 0x6FA86A, 'Gran Vic Lumen');
-    conj(35, -12, 0xD98C98, 'Gran Vic Pulse');
+    conj(4, -27, 0x6FA86A, 'Gran Vic Lumen');
+    conj(8, -45, 0xD98C98, 'Gran Vic Pulse');
 
     // galpões industriais na frente (do outro lado da Av. Armando Giassetti)
     const galpao = (x, z, w, d, h, giro = 0) => {
@@ -833,8 +837,8 @@ function iniciar(DATA) {
     galpao(-10, 24, 24, 10, 4.2, -0.12); galpao(16, 22, 16, 9, 3.6, -0.18); galpao(-32, 20, 14, 9, 3.4, -0.1);
     caixa(70, 0.05, 20, mat(0x55575B), -2, 0.025, 23, false);
     // placas com o nome das avenidas
-    const pl1 = placa('AV. PREF. LUÍS LATORRE', 'frente · portaria', '#FFD27A'); pl1.position.set(X(510), 7.5, -24); pl1.scale.set(12, 3.75, 1);
-    const pl2 = placa('AV. ARMANDO GIASSETTI', 'fundos do condomínio', '#C9D2DC'); pl2.position.set(4, 3.2, 12.2); pl2.scale.set(12, 3.75, 1);
+    const pl1 = placa('AV. PREF. LUÍS LATORRE', 'frente · portaria', '#FFD27A'); pl1.position.set(X(2130), 6.5, 2); pl1.scale.set(12, 3.75, 1);
+    const pl2 = placa('AV. ARMANDO GIASSETTI', 'fundos do condomínio', '#C9D2DC'); pl2.position.set(X(510), 7.5, -20); pl2.scale.set(12, 3.75, 1);
     // Av. Armando Giassetti até a rodovia
     caixa(150, 0.05, 2.8, mat(0x2F3034), 15, 0.04, 12.2, false);
     for (let i = 0; i < 28; i++) caixa(2.0, 0.02, 0.14, mat(0xEDEDED), -55 + i * 5, 0.08, 12.2, false);
@@ -872,7 +876,7 @@ function iniciar(DATA) {
     // árvores (sem cair na rodovia, nos galpões ou nos condomínios vizinhos)
     for (let i = 0; i < 70; i++) {
       const a = rnd() * Math.PI * 2, d = 32 + rnd() * 70; const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if ((x > 76 && x < 160) || (z > 9 && z < 32 && x > -40 && x < 30) || (x > 12 && x < 60 && z > -26 && z < 4) || (x < -26 && z > -32 && z < 32)) continue;
+      if ((x > 76 && x < 160) || (z > 9 && z < 32 && x > -40 && x < 30) || (x > -8 && x < 22 && z > -58 && z < -16) || (x > 24 && x < 36) || (x < -26 && z > -32 && z < 32)) continue;
       arvore(x, z, 1.0 + rnd() * 0.8);
     }
     // cidade de Jundiaí ao fundo (centro, Maxi Shopping)
