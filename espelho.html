@@ -218,6 +218,25 @@ const CONFIG = {
     },
     plantas: [{ k: 'canto', rot: 'Canto 50 m²', finais: ['1', '2', '7', '8'] }, { k: 'meio', rot: 'Meio 47 m²', finais: ['3', '4', '5', '6'] }]
   },
+  'gran-vic-nexus': {
+    modelo: 'nexus', rotBloco: 'Torre', varanda: 'Varanda gourmet',
+    extrasFixos: ['2 dorms'],
+    cam: { pos: [34, 30, 40], mob: [36, 38, 54], alvo: [0, 7, 0], max: 140 },
+    // Rosa dos ventos da implantação (apresentação da VIC, p. 14): norte para cima e à direita.
+    // 01 e 03 ficam para o leste (manhã), 02 e 04 para o oeste (tarde); 01 com frente para o norte, 04 para o sul.
+    giroSol: 0.785, marcasSol: { centro: [0, 0], raio: 26 },
+    rotAndar: (a) => (a === '1' ? 'Térreo' : `${Number(a) - 1}º andar`),
+    rotAndarCurto: (a) => (a === '1' ? 'Térreo' : `${Number(a) - 1}º`),
+    // Torres 1 e 2 com 15 pavimentos, 3 e 4 com 14 (conforme a tabela da VIC); inclinação da implantação
+    blocos: (() => {
+      const and = (n) => Array.from({ length: n }, (_, i) => String(i + 1));
+      const T = (x, y, n) => ({ x: (x - 1050) * 0.0272, z: (y - 560) * 0.0272, giro: -0.446, andares: and(n), finais: ['1', '2', '3', '4'] });
+      return { 1: T(1255, 415, 15), 2: T(1240, 705, 15), 3: T(875, 400, 14), 4: T(860, 700, 14) };
+    })(),
+    sol: (() => { const o = {}; ['1', '2', '3', '4'].forEach((t) => { o[t] = { manha: ['1', '3'], tarde: ['2', '4'] }; }); return o; })(),
+    solNota: { '1': 'face norte, sol boa parte do dia', '4': 'face sul' },
+    plantas: [{ k: 'tr', rot: 'Térreo 43 m²', tip: [10] }, { k: 'tp', rot: 'Tipo 43 m²', tip: [9] }, { k: 'pcd', rot: 'PCD 43 m²', tip: [11] }]
+  },
   'gran-vic-niagara': {
     modelo: 'niagara', rotBloco: 'Torre',
     varanda: (u) => (u && /garden/i.test(u.tipologia_nome || '') ? '🌿 Garden' : 'Varanda'),
@@ -321,12 +340,12 @@ function iniciar(DATA) {
   $('#voltar').href = `index.html#${emp.slug}`;
   $('#tela-cheia').href = `espelho.html#${emp.slug}`;
   const tab = emp.tabela_vigente;
-  $('#tabela-info').textContent = tab ? `Tabela ${tab.versao} · ${emp.bairro || ''}${emp.cidade ? ', ' + emp.cidade : ''}` : '';
+  $('#tabela-info').textContent = tab ? `Tabela ${tab.versao} · ${[emp.bairro, emp.cidade].filter(Boolean).join(', ')}` : '';
 
   const tipPorId = Object.fromEntries((emp.tipologias || []).map((t) => [t.id, t]));
   const porChave = {};
   emp.unidades.forEach((u) => { porChave[`${u.torre}|${u.andar}|${finalDe(u)}`] = u; });
-  if (cfg.modelo === 'brisas' || cfg.modelo === 'niagara') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
+  if (cfg.modelo === 'brisas' || cfg.modelo === 'niagara' || cfg.modelo === 'nexus') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
   const RB = cfg.rotBloco;
 
   // ---------- filtros ----------
@@ -496,6 +515,7 @@ function iniciar(DATA) {
 
   if (cfg.modelo === 'brisas') montarBrisas();
   else if (cfg.modelo === 'niagara') montarNiagara();
+  else if (cfg.modelo === 'nexus') montarNexus();
   else {
   // lote: asfalto do estacionamento, gramados e calçadas
   caixa(32, 0.06, 36.5, mat(0x3A3C40), -5.8, 0.03, 4.9, false);
@@ -674,6 +694,115 @@ function iniciar(DATA) {
     torresInst.push({ bloco, mVid, mGuarda, mSob });
     unidades.filter((r) => r.bloco === bloco).forEach((r) => { r.mVid = mVid; r.mGuarda = mGuarda; r.mSob = mSob; });
   });
+  }
+
+  // ======================================================================
+  // Gran Vic Nexus (VIC, Jundiaí): 4 torres de 14 e 15 pavimentos, 4 aptos por andar.
+  // Posição e inclinação das torres tiradas da implantação da apresentação (p. 14).
+  // Em cada torre: 02 e 04 de um lado do núcleo, 01 e 03 do outro.
+  // ======================================================================
+  function montarNexus() {
+    ESC = 0.4; FH = 2.8;
+    const X = (px) => (px - 1050) * 0.0272, Z = (py) => (py - 560) * 0.0272;
+    const ret = (x0, x1, y0, y1, m, h = 0.06, y = 0.03, sombra = false) => caixa(X(x1) - X(x0), h, Z(y1) - Z(y0), m, (X(x0) + X(x1)) / 2, y, (Z(y0) + Z(y1)) / 2, sombra);
+    const asf = mat(0x47494D), grama = mat(0x4E7A3E), calc = mat(0xB9B3A6), faixa = mat(0xE8E8E8);
+    ret(270, 1990, 185, 915, asf);                                   // estacionamentos e acessos
+    ret(110, 620, 190, 640, asf);
+    ret(110, 260, 190, 640, grama, 0.09, 0.05);
+    ret(655, 1470, 185, 760, grama, 0.09, 0.05);                     // área ajardinada do condomínio
+    ret(420, 620, -100, 700, mat(0x2F3034));                         // Av. Prefeito Luís Latorre
+    ret(270, 1990, 915, 960, calc, 0.12, 0.06);
+    ret(270, 1990, 960, 1060, mat(0x2F3034));
+    // caminhos internos
+    ret(720, 1440, 330, 360, calc, 0.1, 0.06); ret(700, 1440, 600, 630, calc, 0.1, 0.06); ret(1060, 1100, 360, 600, calc, 0.1, 0.06);
+    // lazer: quadra gramada, playground, academia, espaço gourmet, pet, redário, caixas d'água
+    ret(1000, 1170, 485, 655, mat(0x5FA04A), 0.12, 0.07);
+    caixa(X(1170) - X(1000) - 0.4, 0.02, 0.08, faixa, X(1085), 0.14, Z(570), false);
+    ret(820, 960, 500, 610, mat(0xE08A4A), 0.12, 0.07);
+    caixa(X(1080) - X(965), 1.3, Z(520) - Z(420), mat(0x55585C), X(1022), 0.65, Z(470));
+    ret(900, 1110, 220, 330, mat(0xD9D2C4), 0.12, 0.07);
+    caixa(2.0, 0.12, 1.4, mat(0x3C4247), X(1000), 1.4, Z(275)); [[960, 255], [1040, 255], [960, 300], [1040, 300]].forEach(([x, y]) => caixa(0.1, 1.4, 0.1, mat(0x8A8A8A), X(x), 0.7, Z(y)));
+    ret(1330, 1440, 520, 640, mat(0xC9B79F), 0.12, 0.07);
+    [[690, 520], [690, 600]].forEach(([x, y]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 1.6, 20), mat(0xE5E5E2)); c.position.set(X(x), 0.8, Z(y)); c.castShadow = true; scene.add(c); });
+    // vagas
+    for (let x = 300; x < 1540; x += 32) { caixa(0.05, 0.02, 1.6, faixa, X(x), 0.07, Z(740), false); caixa(0.05, 0.02, 1.6, faixa, X(x), 0.07, Z(880), false); }
+    for (let y = 280; y < 900; y += 34) { caixa(1.6, 0.02, 0.05, faixa, X(1500), 0.07, Z(y), false); caixa(1.6, 0.02, 0.05, faixa, X(1660), 0.07, Z(y), false); caixa(1.6, 0.02, 0.05, faixa, X(1880), 0.07, Z(y), false); }
+    // portaria
+    caixa(2.2, 1.5, 1.6, mat(0xC8B49C), X(400), 0.75, Z(600)); caixa(2.8, 0.15, 2.1, mat(0x3C4247), X(400), 1.55, Z(600));
+    caixa(2.2, 1.5, 1.6, mat(0xC8B49C), X(1900), 0.75, Z(860));
+    // árvores
+    [[790, 200], [850, 200], [1215, 200], [1300, 200], [1400, 235], [700, 380], [745, 280], [1100, 470], [1440, 460], [1440, 540], [1440, 620], [990, 840], [780, 860], [300, 700], [400, 700], [520, 700], [300, 850], [660, 660], [700, 650]].forEach(([x, y], i) => arvore(X(x), Z(y), 0.8 + (i % 3) * 0.15));
+    for (let i = 0; i < 80; i++) { const a = rnd() * Math.PI * 2, d = 36 + rnd() * 60; const x = Math.cos(a) * d, z = Math.sin(a) * d; if (z > 10 && z < 15) continue; arvore(x, z, 1.1 + rnd() * 0.9); }
+    // vizinhos (Gran Vic Lumen e Pulse ao lado) e casas
+    [[-34, -6, 12], [-34, 8, 12], [40, -8, 13], [40, 6, 13]].forEach(([x, z, n]) => { caixa(5.5, n * FH * ESC, 5.0, mat(0xBFB6AA), x, n * FH * ESC / 2, z); caixa(5.7, 0.3, 5.2, mat(0x8E8F92), x, n * FH * ESC + 0.15, z); });
+
+    // ---- torres ----
+    const UX = 6.6, NX = 2.2, UZ = 6.5;       // largura do apto, meia largura do núcleo, profundidade
+    const XE = NX + UX;                       // ponta da torre
+    const COR_X = { taupe: 0xC9B6A0, cinza: 0x8E9093, ocre: 0xD8A13E, coroa: 0x7C7E82, caixilho: 0xEFEFED };
+    Object.entries(cfg.blocos).forEach(([bloco, bc]) => {
+      const g = new THREE.Group(); g.position.set(bc.x, 0, bc.z); g.rotation.y = bc.giro; g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
+      const NIV = bc.andares.length, B = 0.4, H = B + NIV * FH;
+      const tl = texLajes(NIV);
+      const mTaupe = mat(COR_X.taupe, { map: tl }), mCinza = mat(COR_X.cinza, { map: tl }), mOcre = mat(COR_X.ocre), mCoroa = mat(COR_X.coroa);
+      const vol = (x0, x1, z0, z1, m, y0 = B, y1 = H) => caixa(x1 - x0, y1 - y0, z1 - z0, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, true, g);
+      vol(-XE - 0.3, XE + 0.3, -UZ - 0.3, UZ + 0.3, mat(0x8F8C86), 0, B);                  // embasamento
+      vol(-NX, NX, -UZ + 1.2, UZ - 1.2, mCinza, B, H + 3.0);                                  // núcleo (2 elevadores)
+      vol(-NX - 0.15, NX + 0.15, -UZ + 1.05, UZ - 1.05, mCoroa, H + 3.0, H + 3.4);
+      const vidros = [], caixilhos = [], lajes = [], guardas = [];
+      const W = (x, y, z, w, h, face, reg) => {
+        const n = face === '+z' ? 1 : face === '-z' ? -1 : 0, nx = face === '+x' ? 1 : face === '-x' ? -1 : 0;
+        caixilhos.push([x + nx * 0.04, y, z + n * 0.04, w + 0.14, h + 0.14, face]);
+        vidros.push([x + nx * 0.07, y, z + n * 0.07, w, h, face, reg]);
+      };
+      // [final, lado x, lado z]: 02 e 04 no -x, 01 e 03 no +x; 02 e 01 no -z
+      [['2', -1, -1], ['4', -1, 1], ['1', 1, -1], ['3', 1, 1]].forEach(([final, sx, sz]) => {
+        const xa = sx > 0 ? NX : -XE, xb = sx > 0 ? XE : -NX;
+        // varanda gourmet na ponta da torre, junto ao eixo (fundo ocre como no render)
+        const vz0 = sz > 0 ? 0.15 : -2.75, vz1 = sz > 0 ? 2.75 : -0.15, vx0 = sx > 0 ? XE - 1.6 : -XE, vx1 = sx > 0 ? XE : -XE + 1.6;
+        vol(xa, xb, sz > 0 ? 2.75 : -UZ, sz > 0 ? UZ : -2.75, final === '1' || final === '4' ? mTaupe : mTaupe);
+        vol(sx > 0 ? NX : -XE + 1.6, sx > 0 ? XE - 1.6 : -NX, vz0, vz1, mTaupe);
+        vol(sx > 0 ? XE - 1.62 : -XE + 1.42, sx > 0 ? XE - 1.42 : -XE + 1.62, vz0, vz1, mOcre);
+        // faixa cinza vertical na fachada longa (ritmo do render)
+        vol(sx * (NX + 0.2) - 0.6, sx * (NX + 0.2) + 0.6, sz > 0 ? UZ - 0.01 : -UZ - 0.15, sz > 0 ? UZ + 0.15 : -UZ + 0.01, mCinza);
+        bc.andares.forEach((andar, k) => {
+          const y0 = B + k * FH;
+          const u = porChave[`${bloco}|${andar}|${final}`];
+          const reg = { bloco, andar, final, u, estado: estado(u), lado: sz, inst: [], grades: [], normLocal: new THREE.Vector3(sx, 0, sz * 0.8).normalize() };
+          const fz = sz > 0 ? '+z' : '-z', fx = sx > 0 ? '+x' : '-x';
+          W(sx * (NX + 2.0), y0 + 1.55, sz * UZ, 1.2, 1.1, fz, reg);           // dormitórios
+          W(sx * (NX + 4.9), y0 + 1.55, sz * UZ, 1.2, 1.1, fz, reg);
+          W(sx * XE, y0 + 1.6, sz * 4.6, 1.0, 1.0, fx, reg);                     // cozinha/serviço
+          W(sx * (XE - 1.62), y0 + 1.1, sz * 1.45, 1.9, 2.1, fx, reg);           // porta da varanda
+          lajes.push([sx * (XE - 0.8), y0 + 0.08, sz * 1.45, 1.6, 0.16, 2.6]);
+          guardas.push([sx * XE, y0 + 0.65, sz * 1.45, 2.6, fx, reg]);
+          const pk = new THREE.Mesh(new THREE.BoxGeometry(UX, FH - 0.1, UZ), new THREE.MeshBasicMaterial({ visible: false }));
+          pk.position.set(sx * (NX + UX / 2), y0 + FH / 2, sz * UZ / 2); g.add(pk); pk.userData.reg = reg; pick.push(pk);
+          reg.pk = pk; reg.grupo = g;
+          reg.sob = [[sx * (NX + UX / 2), y0 + FH / 2, sz * UZ / 2, UX + 0.12, FH - 0.08, UZ + 0.12]];
+          unidades.push(reg);
+        });
+      });
+      vol(-XE - 0.12, XE + 0.12, -UZ - 0.12, UZ + 0.12, mCoroa, H, H + 0.7);
+      const r = rotulo(bloco); r.position.set(0, H + 9, 0); r.scale.set(9, 4.5, 1); g.add(r);
+      const plano = new THREE.PlaneGeometry(1, 1);
+      const posI = (arr, mesh, fn) => arr.forEach((a, i) => { fn(a); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); });
+      const plan = ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, hh, 1); };
+      const mCaix = new THREE.InstancedMesh(plano, mat(COR_X.caixilho, { roughness: 0.5 }), caixilhos.length); posI(caixilhos, mCaix, plan); g.add(mCaix);
+      const mVid = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ toneMapped: false }), vidros.length); posI(vidros, mVid, plan);
+      vidros.forEach((v, i) => { v[6].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); }); g.add(mVid);
+      const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0xEFEEEA), lajes.length);
+      posI(lajes, mLaje, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); }); mLaje.castShadow = true; g.add(mLaje);
+      const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }), guardas.length);
+      posI(guardas, mGuarda, ([x, y, z, w, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, 1.1, 1); });
+      guardas.forEach((gd, i) => { gd[5].grades.push(i); mGuarda.setColorAt(i, new THREE.Color(0xffffff)); }); g.add(mGuarda);
+      const sobs = unidades.filter((x) => x.bloco === bloco).flatMap((x) => x.sob.map((b) => [b, x]));
+      const mSob = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.72, toneMapped: false, depthWrite: false }), sobs.length);
+      sobs.forEach(([[x, y, z, w, hh, d], rr], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); dummy.updateMatrix(); mSob.setMatrixAt(i, dummy.matrix); mSob.setColorAt(i, new THREE.Color(0xffffff)); rr.sobI = (rr.sobI || []).concat(i); });
+      mSob.visible = false; g.add(mSob);
+      torresInst.push({ bloco, mVid, mGuarda, mSob });
+      unidades.filter((x) => x.bloco === bloco).forEach((x) => { x.mVid = mVid; x.mGuarda = mGuarda; x.mSob = mSob; x.normal = x.normLocal.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), bc.giro); });
+    });
   }
 
   // ======================================================================
@@ -1016,7 +1145,7 @@ function iniciar(DATA) {
     if (b === 'todos') { camAlvo = { pos: CAM_INICIAL(), alvo: new THREE.Vector3(...cfg.cam.alvo) }; return; }
     const bc = cfg.blocos[b], bx = bc.x || 0;
     const h = (bc.andares.length + (cfg.modelo === 'brisas' ? 1 : 0)) * FH * ESC / 2;
-    const d = cfg.modelo === 'brisas' ? 30 : 20;
+    const d = cfg.modelo === 'brisas' ? 30 : cfg.modelo === 'nexus' ? 34 : 20;
     camAlvo = { pos: new THREE.Vector3(bx + d * 0.7, h + 7, bc.z + d + (b === 'A' ? 2 : 0)).add(mobile() ? new THREE.Vector3(6, 4, 10) : new THREE.Vector3()), alvo: new THREE.Vector3(bx, h, bc.z) };
   }
   function focarUnidade(r) {
@@ -1025,6 +1154,7 @@ function iniciar(DATA) {
     const p = r.centro.clone();
     const lado = r.lado;
     const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : 1);
+    if (r.normal) { camAlvo = { pos: p.clone().add(r.normal.clone().multiplyScalar(dist)).add(new THREE.Vector3(0, 3, 0)), alvo: p.clone() }; return; }
     camAlvo = { pos: new THREE.Vector3(p.x * 0.6 + 6, Math.max(p.y + 3, 4), p.z + lado * dist), alvo: p.clone() };
   }
 
