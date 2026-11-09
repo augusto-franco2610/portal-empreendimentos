@@ -2318,7 +2318,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
           <div class="filtro-area" id="vaga-filtro" hidden style="margin-top:10px"><span class="rot">Vaga</span><div class="exp-pilulas" role="group" aria-label="Tipo de vaga" id="vagas"></div><span class="sec peq" id="vagas-res"></span></div>
           <div class="mapa-cab">
             <div class="exp-pilulas" role="group" aria-label="Torre" id="torres"></div>
-            <div class="mapa-leg"><span><i class="u livre"></i>Disponível</span><span><i class="u reserva"></i>Reservada</span><span><i class="u vendida"></i>Vendida</span><span><i class="u vazio"></i>Fora da tabela</span></div>
+            <div class="mapa-leg"><span><i class="u livre"></i>Disponível</span><span><i class="u reserva"></i>Reservada</span><span><i class="u vendida"></i>Vendida</span>${e.slug === 'smart-ape-medeiros' ? '' : '<span><i class="u vazio"></i>Fora da tabela</span>'}</div>
           </div>
           <p class="torre-entrega" id="torre-entrega" hidden></p>
           <div class="mapa-wrap"><div class="mapa" id="mapa"></div><aside class="mapa-info" id="mapa-info"></aside></div>
@@ -2543,6 +2543,8 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
         };
         desenharVagas();
       }
+      // Regra do Franco: no Smart Apê, unidade fora da tabela = vendida (térreo do bloco A finais 7 e 8 é o salão de festas)
+      const foraVendida = { 'smart-ape-medeiros': { inexistentes: ['A|0|7', 'A|0|8'] } }[e.slug] || null;
       const info = $('#mapa-info', view);
       const mostrarUn = (u) => {
         $$('.u.sel', mapa).forEach((x) => x.classList.remove('sel'));
@@ -2578,6 +2580,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
         mapa.style.setProperty('--cols', finais.length);
         mapa.innerHTML = `<div class="mapa-grade">${andares.map((a) => `<span class="andar">${a === 0 ? 'Térreo' : a + 'º'}</span>${finais.map((fn) => {
           const u = lista.find((x) => andarDe(x) === a && fin(x) === fn);
+          if (!u && foraVendida && !(foraVendida.inexistentes || []).includes(`${t}|${a}|${fn}`)) return `<span class="u vendida${filtroArea || filtroVaga ? ' fora-filtro' : ''}" style="display:grid;place-items:center;cursor:default" title="${esc(`${a === 0 ? '' : a}${fn}`)} · Vendida (fora da tabela)">${esc(`${a === 0 ? '' : a}${fn}`)}</span>`;
           return u ? `<button class="u ${estadoUn(u)}${vagaDe(u) ? (vagaDe(u) === 'coberta' ? ' vg-c' : ' vg-d') : ''}${passa(u) ? '' : ' fora-filtro'}"${vagaDe(u) ? ` data-vg="${vagaDe(u) === 'coberta' ? 'C' : 'D'}"` : ''} data-u="${u.id}" title="${esc(u.numero)} · ${esc(u.disponibilidade || '')}${vagaDe(u) ? ' · vaga ' + vagaDe(u) : ''}${u.preco ? ' · ' + R(u.preco) : ''}">${esc(u.numero)}</button>` : '<span class="u vazio" aria-hidden="true"></span>';
         }).join('')}`).join('')}</div>`;
         $$('.u[data-u]', mapa).forEach((b, i) => { b.style.setProperty('--d', Math.min(i, 60)); b.onclick = () => mostrarUn(uns.find((x) => String(x.id) === b.dataset.u)); });
