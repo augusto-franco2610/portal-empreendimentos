@@ -126,30 +126,29 @@ a { color: inherit; }
 .embed .kpis { top: 64px; }
 .embed .tela-cheia { order: 2; }
 .embed .filtros { left: 18px; transform: none; max-width: calc(100% - 410px); justify-content: flex-start; }
+/* Celular e telas estreitas: tudo empilhado, nada por cima do prédio */
 @media (max-width: 900px) {
-  .embed .kpis { display: none; }
-  .embed .filtros { top: 62px; max-width: none; left: 12px; }
-  .embed .ajuda { top: 112px; }
-}
-@media (max-width: 900px) {
-  .topo { padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); }
-  .titulo h1 { font-size: 16px; }
+  html, body { height: auto; overflow: auto; }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  .topo { position: static; order: 1; background: var(--fundo); padding: 12px 14px 8px; padding-top: max(12px, env(safe-area-inset-top)); pointer-events: auto; }
+  .titulo h1 { font-size: 17px; }
   .titulo p { display: none; }
-  .kpis { top: 64px; left: 12px; right: 12px; width: auto; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .embed .topo { padding-top: 12px; }
+  .kpis { position: static; order: 2; width: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 14px 10px; }
   .kpi { padding: 7px 9px; }
-  .kpi b { font-size: 16px; }
+  .kpi b { font-size: 15px; }
   .kpi span { font-size: 10px; }
   .kpi.total { display: none; }
-  .legenda { display: none; }
-  .ajuda { top: 124px; }
-  .filtros { left: 12px; right: 12px; transform: none; max-width: none; bottom: auto; top: 118px; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; }
-  .filtros::-webkit-scrollbar { display: none; }
-  .grupo { flex-shrink: 0; }
-  .painel { top: auto; left: 0; right: 0; bottom: 0; width: auto; border-radius: 20px 20px 0 0; max-height: 46vh; transition: max-height .3s ease; border-bottom: 0; }
-  .painel.aberto { max-height: 86vh; }
-  .alca { display: block; width: 100%; padding: 10px 0 2px; }
-  .alca i { display: block; width: 42px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.25); margin: 0 auto; }
-  .painel-rolagem { padding: 8px 16px 20px; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  #cena { position: relative; order: 3; inset: auto; width: 100%; height: 62vh; min-height: 340px; max-height: 560px; flex-shrink: 0; }
+  .ajuda { display: none; }
+  .legenda { position: static; order: 4; display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 14px 0; padding: 8px 12px; }
+  .filtros { position: static; order: 5; transform: none; max-width: none; display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px 4px; }
+  .grupo { overflow-x: auto; scrollbar-width: none; align-self: flex-start; max-width: 100%; }
+  .grupo::-webkit-scrollbar { display: none; }
+  .embed .filtros { max-width: none; }
+  .painel { position: static; order: 6; width: auto; margin: 10px 14px 18px; border-radius: 16px; max-height: none; overflow: visible; }
+  .painel-rolagem { overflow: visible; padding: 16px; }
+  .alca { display: none; }
   .un-titulo { font-size: 20px; margin-top: 6px; }
   .preco { font-size: 26px; margin-top: 10px; }
   .dica { display: none; }
@@ -229,6 +228,14 @@ const numUn = (andar, final) => andar === '0' ? `0${final}` : `${andar}${final}`
 
 const EMBED = new URLSearchParams(location.search).has('embed');
 if (EMBED) document.documentElement.classList.add('embed');
+// No celular, o iframe da página cresce até a altura do conteúdo (sem rolagem interna)
+let ultimaAltura = -1;
+function avisarAltura() {
+  if (!EMBED || parent === window) return;
+  const h = innerWidth <= 900 ? Math.ceil(document.body.scrollHeight) : 0;
+  if (Math.abs(h - ultimaAltura) < 2) return;
+  ultimaAltura = h; parent.postMessage({ tipo: 'espelho-altura', h }, '*');
+}
 const slug = (location.hash || '').replace(/^#\/?/, '').split('?')[0] || 'smart-ape-medeiros';
 const cfg = CONFIG[slug];
 
@@ -299,7 +306,8 @@ function iniciar(DATA) {
   const host = $('#cena');
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(innerWidth, innerHeight);
+  const tam = () => [host.clientWidth || innerWidth, host.clientHeight || innerHeight];
+  renderer.setSize(...tam());
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -310,9 +318,9 @@ function iniciar(DATA) {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(C(0x7A6E7E), 110, 420);
 
-  const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 700);
+  const camera = new THREE.PerspectiveCamera(40, tam()[0] / tam()[1], 0.1, 700);
   const mobile = () => innerWidth <= 900;
-  const CAM_INICIAL = () => mobile() ? new THREE.Vector3(38, 30, 66) : new THREE.Vector3(38, 22, 44);
+  const CAM_INICIAL = () => mobile() ? new THREE.Vector3(30, 24, 50) : new THREE.Vector3(38, 22, 44);
   camera.position.copy(CAM_INICIAL());
 
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -672,7 +680,7 @@ function iniciar(DATA) {
     const p = r.centro.clone();
     const lado = r.lado;
     const dist = mobile() ? 30 : 19;
-    camAlvo = { pos: new THREE.Vector3(p.x * 0.6 + 6, Math.max(p.y + 3, 4), p.z + lado * dist), alvo: p.clone().add(new THREE.Vector3(0, mobile() ? -3 : 0, 0)) };
+    camAlvo = { pos: new THREE.Vector3(p.x * 0.6 + 6, Math.max(p.y + 3, 4), p.z + lado * dist), alvo: p.clone() };
   }
 
   // ---------- painel ----------
@@ -790,12 +798,18 @@ function iniciar(DATA) {
     box.querySelectorAll('[data-gb]').forEach((b) => b.onclick = () => { gradeBloco = b.dataset.gb; desenharGrade(); });
     box.querySelectorAll('button.c').forEach((b) => b.onclick = () => {
       const r = unidades.find((x) => x.bloco === b.dataset.b && x.andar === b.dataset.a && x.final === b.dataset.f);
-      if (r) { mostrar(r); $('#painel-rolagem').scrollTop = 0; }
+      if (r) { mostrar(r); $('#painel-rolagem').scrollTop = 0; if (mobile()) abrirPainel(); }
     });
   }
 
   const painel = $('#painel');
-  const abrirPainel = () => { if (mobile()) painel.classList.add('aberto'); };
+  // no celular a ficha fica abaixo do prédio: rola até ela
+  const abrirPainel = () => {
+    if (!mobile()) return;
+    const y = painel.getBoundingClientRect().top + scrollY;
+    if (EMBED && parent !== window) parent.postMessage({ tipo: 'espelho-rolar', y }, '*');
+    else scrollTo({ top: y - 10, behavior: 'smooth' });
+  };
   $('#alca').onclick = () => painel.classList.toggle('aberto');
   $('#lupa').onclick = () => $('#lupa').classList.remove('on');
 
@@ -833,7 +847,9 @@ function iniciar(DATA) {
     if (r) { mostrar(r); abrirPainel(); $('#painel-rolagem').scrollTop = 0; $('#ajuda').classList.add('some'); }
   });
 
-  addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+  const redimensionar = () => { const [w, h] = tam(); camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); avisarAltura(); };
+  addEventListener('resize', redimensionar);
+  if (window.ResizeObserver) new ResizeObserver(() => avisarAltura()).observe(document.body);
 
   // ---------- loop ----------
   const relogio = new THREE.Clock();
