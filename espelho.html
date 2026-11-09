@@ -221,7 +221,7 @@ const CONFIG = {
   'gran-vic-nexus': {
     modelo: 'nexus', rotBloco: 'Torre', varanda: 'Varanda gourmet',
     extrasFixos: ['2 dorms'],
-    cam: { pos: [64, 30, -26], mob: [84, 46, -34], alvo: [6, 5, 0], max: 260 },
+    cam: { pos: [66, 34, -2], mob: [88, 50, -4], alvo: [4, 5, -12], max: 260 },
     // Rosa dos ventos da implantação (apresentação da VIC, p. 14): norte para cima e à direita.
     // 01 e 03 ficam para o leste (manhã), 02 e 04 para o oeste (tarde); 01 com frente para o norte, 04 para o sul.
     giroSol: 0.785, marcasSol: { centro: [0, 0], raio: 26 },
@@ -726,32 +726,30 @@ function iniciar(DATA) {
       const corpo = new THREE.Mesh(new THREE.BoxGeometry(w, PG, d), [mL, mL, mat(0x8F9194), mat(0x9A9C9F), mF, mF]);
       corpo.position.y = PG / 2; corpo.castShadow = corpo.receiveShadow = true; gb.add(corpo);
       caixa(w + 0.2, 0.25, d + 0.2, mat(0x8E9093), 0, PG + 0.12, 0, true, gb);          // platibanda / laje do lazer
-      if (comPortaria) {
-        // portaria (render da VIC): faixa escura, painel de madeira em espinha de peixe com o logo, marquise e portão
-        const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512;
-        const g2 = cv.getContext('2d'); g2.fillStyle = '#A0703F'; g2.fillRect(0, 0, 512, 512);
-        for (let y = -512; y < 1024; y += 28) for (let x = 0; x < 512; x += 56) {
-          g2.fillStyle = (Math.floor(y / 28) + x / 56) % 2 ? '#B9834C' : '#8E5F33';
-          g2.save(); g2.translate(x, y); g2.rotate(((x / 56) % 2 ? 1 : -1) * Math.PI / 4); g2.fillRect(0, 0, 40, 14); g2.restore();
-        }
-        g2.fillStyle = '#6FB7C9'; for (let i = 0; i < 5; i++) g2.fillRect(196, 150 + i * 16, 120, 9);
-        g2.fillStyle = '#DCE7EA'; g2.font = 'bold 34px Montserrat, sans-serif'; g2.textAlign = 'center'; g2.fillText('GRAN VIC', 256, 280);
-        g2.fillStyle = '#6FC2B5'; g2.font = '800 64px Montserrat, sans-serif'; g2.fillText('NEXUS', 256, 345);
-        const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding;
-        // portaria na lateral da Av. Prefeito Luís Latorre (guarita e acesso da implantação);
-        // os fundos do condomínio ficam para a Av. Armando Giassetti
-        const pg = new THREE.Group(); pg.rotation.y = Math.PI / 2; gb.add(pg);
-        const fz = w / 2 + 0.06, px = -4;
-        const painel = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.6), new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }));
-        painel.position.set(px + 2.4, 1.4, fz + 0.02); pg.add(painel);
-        caixa(9.5, 0.6, 0.25, mat(0x2E3133), px, 2.95, fz + 0.1, true, pg);              // faixa escura
-        caixa(3.2, 0.12, 1.6, mat(0x232527), px - 3.2, 1.75, fz + 0.8, true, pg);       // marquise
-        caixa(2.6, 1.5, 0.08, mat(0x3A3D40), px - 0.4, 0.75, fz + 0.04, false, pg);     // portão
-        caixa(2.0, 1.4, 0.06, new THREE.MeshStandardMaterial({ color: C(0xE8A55A), emissive: C(0x6B3A12), emissiveIntensity: 0.6 }), px - 3.2, 0.75, fz + 0.03, false, pg);
-        caixa(6.0, 0.1, 1.2, mat(0x5E8A4C), px + 2.2, 0.06, fz + 0.65, false, pg);      // jardim da frente
-        gb.updateMatrixWorld(true); const pp = pg.localToWorld(new THREE.Vector3(px + 1.2, 0, fz + 0.6)); palmeira(pp.x, pp.z);
-      }
       return gb;
+    };
+    // Portaria (render da VIC): faixa escura, painel de madeira em espinha de peixe com o logo,
+    // marquise iluminada e portão. Voltada para a Av. Prefeito Luís Latorre (+x).
+    const portaria = (xf, zc, nome, corLogo) => {
+      const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512;
+      const g2 = cv.getContext('2d'); g2.fillStyle = '#A0703F'; g2.fillRect(0, 0, 512, 512);
+      for (let y = -512; y < 1024; y += 28) for (let x = 0; x < 512; x += 56) {
+        g2.fillStyle = (Math.floor(y / 28) + x / 56) % 2 ? '#B9834C' : '#8E5F33';
+        g2.save(); g2.translate(x, y); g2.rotate(((x / 56) % 2 ? 1 : -1) * Math.PI / 4); g2.fillRect(0, 0, 40, 14); g2.restore();
+      }
+      g2.fillStyle = corLogo; for (let i = 0; i < 5; i++) g2.fillRect(196, 140 + i * 16, 120, 9);
+      g2.fillStyle = '#EEF2F3'; g2.font = 'bold 34px Montserrat, sans-serif'; g2.textAlign = 'center'; g2.fillText('GRAN VIC', 256, 270);
+      g2.fillStyle = corLogo; g2.font = '800 64px Montserrat, sans-serif'; g2.fillText(nome.toUpperCase(), 256, 338);
+      const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding;
+      const pg = new THREE.Group(); pg.position.set(xf, 0, zc); pg.rotation.y = Math.PI / 2; scene.add(pg);   // local +z = +x (rua)
+      const painel = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 2.0), new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }));
+      painel.position.set(0.6, 1.15, 0.9); pg.add(painel);
+      caixa(1.9, 2.3, 0.8, mat(0x8E5F33), 0.6, 1.15, 0.45, true, pg);                 // volume do painel
+      caixa(3.4, 0.5, 1.1, mat(0x2E3133), 0, 2.55, 0.55, true, pg);                   // faixa escura
+      caixa(1.6, 0.12, 1.5, mat(0x232527), -0.95, 1.7, 1.0, true, pg);                // marquise
+      caixa(1.4, 1.4, 0.06, new THREE.MeshStandardMaterial({ color: C(0xE8A55A), emissive: C(0x6B3A12), emissiveIntensity: 0.6 }), -0.95, 0.75, 0.3, false, pg);
+      caixa(3.4, 0.1, 0.9, mat(0x5E8A4C), 0, 0.06, 1.5, false, pg);                   // jardim
+      const pp = new THREE.Vector3(0.6, 0, 1.6); pg.updateMatrixWorld(true); pg.localToWorld(pp); palmeira(pp.x, pp.z);
     };
     ret(270, 1990, 185, 915, asf);                                   // estacionamentos e acessos
     ret(110, 380, 190, 640, asf);
@@ -783,7 +781,7 @@ function iniciar(DATA) {
     [[690, 520], [690, 600]].forEach(([x, y]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 1.6, 20), mat(0xE5E5E2)); c.position.set(X(x), 0.8, Z(y)); c.castShadow = true; scene.add(c); });
     const nLazer3 = scene.children.length;
     [...scene.children.slice(nLazer0, nLazer1), ...scene.children.slice(nLazer2, nLazer3)].forEach((o) => { o.position.y += PG + 0.2; });
-    embasamento(X(1062), Z(472), X(1480) - X(645), Z(770) - Z(175), 0, true);
+    embasamento(X(1062), Z(472), X(1480) - X(645), Z(770) - Z(175), 0, false);
     // vagas
     for (let x = 300; x < 1540; x += 32) { caixa(0.05, 0.02, 1.6, faixa, X(x), 0.07, Z(740), false); caixa(0.05, 0.02, 1.6, faixa, X(x), 0.07, Z(880), false); }
     for (let y = 280; y < 900; y += 34) { caixa(1.6, 0.02, 0.05, faixa, X(1500), 0.07, Z(y), false); caixa(1.6, 0.02, 0.05, faixa, X(1660), 0.07, Z(y), false); caixa(1.6, 0.02, 0.05, faixa, X(1880), 0.07, Z(y), false); }
@@ -820,12 +818,19 @@ function iniciar(DATA) {
     const conj = (cx, cz, cor, nome) => {
       const c = Math.cos(-0.446), s = Math.sin(-0.446);
       offs.forEach(([ox, oz, n]) => torreVizinha(cx + ox * c + oz * s, cz - ox * s + oz * c, -0.446, n, cor));
-      embasamento(cx, cz, 19, 15, -0.446, false);
-      const gm = caixa(17, 0.1, 13, mat(0x4E7A3E), cx, PG + 0.3, cz, false); gm.rotation.y = -0.446;
+      embasamento(cx, cz, X(1480) - X(645), 16.4, 0, false);
+      caixa(X(1480) - X(645) - 1.2, 0.1, 15.2, mat(0x4E7A3E), cx, PG + 0.3, cz, false);
       const p = placa(nome, 'VIC Engenharia', '#FFFFFF'); p.position.set(cx, 22 + PG, cz); p.scale.set(11, 3.4, 1);
     };
-    conj(4, -27, 0x6FA86A, 'Gran Vic Lumen');
-    conj(8, -45, 0xD98C98, 'Gran Vic Pulse');
+    // Lumen e Pulse colados ao Nexus ao longo da Av. Prefeito Luís Latorre
+    const zN = Z(175);                                                   // divisa norte do Nexus
+    conj(X(1062), zN - 8.4, 0x6FA86A, 'Gran Vic Lumen');
+    conj(X(1062), zN - 25.0, 0xD98C98, 'Gran Vic Pulse');
+    // as três portarias uma ao lado da outra, coladas, junto à divisa Nexus/Lumen
+    const xf = X(1480) + 0.05;
+    portaria(xf, zN + 1.8, 'Nexus', '#6FC2B5');
+    portaria(xf, zN - 1.6, 'Lumen', '#9C7BE0');
+    portaria(xf, zN - 5.0, 'Pulse', '#F08A5D');
 
     // galpões industriais na frente (do outro lado da Av. Armando Giassetti)
     const galpao = (x, z, w, d, h, giro = 0) => {
@@ -876,7 +881,7 @@ function iniciar(DATA) {
     // árvores (sem cair na rodovia, nos galpões ou nos condomínios vizinhos)
     for (let i = 0; i < 70; i++) {
       const a = rnd() * Math.PI * 2, d = 32 + rnd() * 70; const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if ((x > 76 && x < 160) || (z > 9 && z < 32 && x > -40 && x < 30) || (x > -8 && x < 22 && z > -58 && z < -16) || (x > 24 && x < 36) || (x < -26 && z > -32 && z < 32)) continue;
+      if ((x > 76 && x < 160) || (z > 9 && z < 32 && x > -40 && x < 30) || (x > -14 && x < 16 && z > -46 && z < -9) || (x > 24 && x < 36) || (x < -26 && z > -32 && z < 32)) continue;
       arvore(x, z, 1.0 + rnd() * 0.8);
     }
     // cidade de Jundiaí ao fundo (centro, Maxi Shopping)
