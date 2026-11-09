@@ -1998,6 +1998,8 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   async function carregarParams() { return DATA.params; }
   const urlEmp = (slug) => (DATA.url ? `${DATA.url}#${slug}` : '');
 
+  // Empreendimentos com espelho de vendas 3D (espelho.html)
+  const ESPELHO3D = ['smart-ape-medeiros', 'brisas-do-japi'];
   function rotaInicial() {
     const h = (location.hash || '').slice(1);
     if (/^\/simulador\?[A-Za-z0-9=&]+$/.test(h)) return h; // vindo do espelho 3D
@@ -2296,7 +2298,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
             <div class="exp-preco"><span>${esc(fp.v)}</span>${fp.n || e.preco_fonte ? `<small>${esc(e.preco_fonte || fp.n)}</small>` : ''}</div>
             <div class="acoes">
               <a class="btn prim" href="#/simulador?emp=${e.id}">${IC.calc}Simular financiamento</a>
-              ${e.slug === 'smart-ape-medeiros' ? `<a class="btn espelho3d" href="espelho.html#${esc(e.slug)}">Espelho 3D</a>` : ''}
+              ${ESPELHO3D.includes(e.slug) ? `<a class="btn espelho3d" href="espelho.html#${esc(e.slug)}">Espelho 3D</a>` : ''}
               ${e.apresentacao ? `<button class="btn" data-baixar="${e.apresentacao.id}">${IC.baixar}Baixar apresentação</button>` : ''}
               ${linkPag ? `<button class="btn" id="copiar">${IC.link}Copiar link</button>` : ''}
             </div>
@@ -2329,9 +2331,9 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
           <div class="planta-palco" id="planta-palco"></div>
         </section>` : ''}
 
-        ${uns.length ? `<section class="exp-sec revelar${e.slug === 'smart-ape-medeiros' ? ' espelho3d-on' : ''}" id="s-unidades">
+        ${uns.length ? `<section class="exp-sec revelar${ESPELHO3D.includes(e.slug) ? ' espelho3d-on' : ''}" id="s-unidades">
           <div class="exp-cab"><h2>Unidades</h2><span class="sec peq">Tabela ${esc(tab.versao)} de ${dataBR(tab.data_referencia)}${tab.desatualizada ? ', <b style="color:var(--ambar)">desatualizada</b>' : ''}</span></div>
-          ${e.slug === 'smart-ape-medeiros' ? `<div class="espelho-embed"><iframe src="espelho.html?embed=1#${esc(e.slug)}" title="Espelho de vendas 3D" loading="lazy" allow="fullscreen"></iframe></div>
+          ${ESPELHO3D.includes(e.slug) ? `<div class="espelho-embed"><iframe src="espelho.html?embed=1#${esc(e.slug)}" title="Espelho de vendas 3D" loading="lazy" allow="fullscreen"></iframe></div>
           <p class="sec peq" style="margin:8px 0 22px">Gire o prédio e toque na unidade para ver valores, sol e simular. <a href="espelho.html#${esc(e.slug)}" target="_blank" rel="noopener">Abrir em tela cheia</a></p>` : ''}
           <div class="filtro-area" id="areas-filtro" hidden><span class="rot">Metragem</span><div class="exp-pilulas" role="group" aria-label="Metragem" id="areas"></div><span class="sec peq" id="areas-res"></span></div>
           <div class="filtro-area" id="vaga-filtro" hidden style="margin-top:10px"><span class="rot">Vaga</span><div class="exp-pilulas" role="group" aria-label="Tipo de vaga" id="vagas"></div><span class="sec peq" id="vagas-res"></span></div>

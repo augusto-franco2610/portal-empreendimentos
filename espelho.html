@@ -42,7 +42,7 @@ a { color: inherit; }
 .barra i { display: block; height: 100%; }
 
 .filtros { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: 18px; bottom: max(18px, env(safe-area-inset-bottom)); display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 420px); }
-.grupo { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--painel); border: 1px solid var(--linha); backdrop-filter: blur(10px); }
+.grupo { display: flex; gap: 2px; padding: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none; border-radius: 999px; background: var(--painel); border: 1px solid var(--linha); backdrop-filter: blur(10px); }
 .grupo button { padding: 7px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--sec); white-space: nowrap; }
 .grupo button[aria-pressed="true"] { background: var(--vinho); color: #fff; }
 .grupo button:not([aria-pressed="true"]):hover { color: var(--texto); }
@@ -84,11 +84,16 @@ a { color: inherit; }
 
 .grade-cab { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 8px; }
 .grade-cab .rot { margin: 0; }
-.grade-blocos { display: flex; gap: 4px; }
-.grade-blocos button { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; color: var(--sec); border: 1px solid var(--linha); }
+.grade-blocos { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.grade-cab { gap: 10px; }
+.grade-cab .rot { white-space: nowrap; }
+.grade-blocos button { font-size: 12px; font-weight: 700; padding: 4px 9px; min-width: 28px; border-radius: 8px; color: var(--sec); border: 1px solid var(--linha); }
 .grade-blocos button[aria-pressed="true"] { color: #fff; background: rgba(255,255,255,.12); }
 .grade { display: grid; grid-template-columns: 44px repeat(8, 1fr); gap: 3px; font-family: 'JetBrains Mono', monospace; }
 .grade .cab.sol { font-size: 12px; line-height: 1; }
+.grade.larga { gap: 2px; }
+.grade.larga .c { font-size: 8.5px; height: 22px; border-radius: 4px; letter-spacing: -.02em; }
+.grade.larga .cab { font-size: 8.5px; }
 .grade .and { font-size: 10px; color: var(--sec); display: flex; align-items: center; }
 .grade .cab { font-size: 10px; color: var(--sec); text-align: center; }
 .grade .c { height: 26px; border-radius: 5px; font-size: 10.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: rgba(0,0,0,.75); transition: transform .12s; }
@@ -136,7 +141,7 @@ a { color: inherit; }
   .embed .topo { padding-top: 12px; }
   .kpis { position: static; order: 2; width: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 14px 10px; }
   .kpi { padding: 7px 9px; }
-  .kpi b { font-size: 15px; }
+  .kpi b { font-size: 14px; white-space: nowrap; }
   .kpi span { font-size: 10px; }
   .kpi.total { display: none; }
   #cena { position: relative; order: 3; inset: auto; width: 100%; height: 62vh; min-height: 340px; max-height: 560px; flex-shrink: 0; }
@@ -196,6 +201,8 @@ a { color: inherit; }
  * ------------------------------------------------------------------ */
 const CONFIG = {
   'smart-ape-medeiros': {
+    modelo: 'smart', rotBloco: 'Bloco', varanda: 'Varanda gourmet',
+    cam: { pos: [38, 22, 44], mob: [30, 24, 50], alvo: [-2, 4, 3], max: 120 },
     // norte = lado da Torre C; sul = Av. João Gonçalves dos Reis
     blocos: {
       A: { z: 13.3, niveis: 8, norte: ['1', '3', '5', '7'], sul: ['2', '4', '6', '8'], amenidades: { '0|7': 'Salão de festas', '0|8': 'Salão de festas' } },
@@ -210,8 +217,26 @@ const CONFIG = {
       C: { manha: ['1', '3', '5', '7'], tarde: ['2', '4', '6', '8'] }
     },
     plantas: [{ k: 'canto', rot: 'Canto 50 m²', finais: ['1', '2', '7', '8'] }, { k: 'meio', rot: 'Meio 47 m²', finais: ['3', '4', '5', '6'] }]
+  },
+  'brisas-do-japi': {
+    modelo: 'brisas', rotBloco: 'Torre', varanda: 'Varanda',
+    cam: { pos: [62, 42, 78], mob: [58, 52, 96], alvo: [0, 5, 4], max: 230 },
+    // Torres e finais conforme a implantação do book da VVC (fileira de cima = F1 em diante)
+    blocos: (() => {
+      const c13 = ['1', '2', '3', '4', '5', '6', '7'], b13 = ['13', '12', '11', null, '10', '9', '8'];
+      const c12 = ['1', '2', '3', '4', '5', '6'], b12 = ['12', '11', '10', null, '9', '8', '7'];
+      const and = ['1', '2', '3', '4', '5', '6', '7', '8'];
+      const T = (x, y, tipo) => ({ x: (x - 630) * 0.06, z: (y - 830) * 0.06, tipo, andares: and, cima: tipo === 12 ? c12 : c13, baixo: tipo === 12 ? b12 : b13 });
+      return { 1: T(872, 1183, 13), 2: T(872, 1013, 13), 3: T(872, 842, 13), 4: T(872, 672, 13), 5: T(872, 500, 12), 6: T(388, 470, 12), 7: T(388, 640, 13), 8: T(388, 812, 13), 9: T(388, 985, 13) };
+    })(),
+    plantas: [{ k: 'st', rot: 'Studio 34 m²', tip: [3] }, { k: 'd49', rot: '2 dorms 49 m²', tip: [4] }, { k: 's52', rot: 'Suíte 52 m²', tip: [5] }, { k: 's66', rot: 'Suíte 66 m²', tip: [6] }]
   }
 };
+// lista de andares e finais de cada bloco (genérico)
+Object.values(CONFIG).forEach((c) => Object.values(c.blocos).forEach((bc) => {
+  if (!bc.andares) bc.andares = Array.from({ length: bc.niveis }, (_, i) => String(i));
+  if (!bc.finais) bc.finais = [...(bc.norte || []), ...(bc.sul || []), ...(bc.cima || []), ...(bc.baixo || [])].filter(Boolean).sort((a, b) => a - b);
+}));
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -224,7 +249,8 @@ const estado = (u) => !u ? 'vendida' : /dispon/i.test(u.disponibilidade || '') ?
 const ROT_EST = { livre: 'Disponível', reserva: 'Reservada', vendida: 'Vendida', fora: 'Fora da tabela' };
 const COR = { livre: 0x35D07F, reserva: 0xF5B935, vendida: 0xE5484D, fora: 0x3B3D47, apagada: 0x22242B, amen: 0xFFB86B };
 const andarTxt = (a) => a === '0' ? 'Térreo' : `${a}º andar`;
-const numUn = (andar, final) => andar === '0' ? `0${final}` : `${andar}${final}`;
+let numUn = (andar, final) => andar === '0' ? `0${final}` : `${andar}${final}`;
+const finalDe = (u) => u.final || String(Number(String(u.numero).slice(-2)));
 
 const EMBED = new URLSearchParams(location.search).has('embed');
 if (EMBED) document.documentElement.classList.add('embed');
@@ -270,7 +296,9 @@ function iniciar(DATA) {
 
   const tipPorId = Object.fromEntries((emp.tipologias || []).map((t) => [t.id, t]));
   const porChave = {};
-  emp.unidades.forEach((u) => { porChave[`${u.torre}|${u.andar}|${u.final}`] = u; });
+  emp.unidades.forEach((u) => { porChave[`${u.torre}|${u.andar}|${finalDe(u)}`] = u; });
+  if (cfg.modelo === 'brisas') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
+  const RB = cfg.rotBloco;
 
   // ---------- filtros ----------
   const filtro = { bloco: 'todos', status: 'todos', planta: 'todas', sol: 'todos' };
@@ -280,16 +308,16 @@ function iniciar(DATA) {
     (filtro.bloco === 'todos' || filtro.bloco === bloco) &&
     (filtro.sol === 'todos' || solDe(bloco, final) === filtro.sol) &&
     (filtro.status === 'todos' || estado(u) === 'livre') &&
-    (filtro.planta === 'todas' || cfg.plantas.find((p) => p.k === filtro.planta).finais.includes(final));
+    (filtro.planta === 'todas' || (() => { const pl = cfg.plantas.find((p) => p.k === filtro.planta); return pl.tip ? !!u && pl.tip.includes(u.tipologia_id) : pl.finais.includes(final); })());
 
   // ---------- KPIs ----------
   const cont = { livre: 0, reserva: 0, vendida: 0, fora: 0 };
   let total = 0;
   Object.entries(cfg.blocos).forEach(([b, bc]) => {
-    for (let n = 0; n < bc.niveis; n++) [...bc.norte, ...bc.sul].forEach((f) => {
+    bc.andares.forEach((n) => bc.finais.forEach((f) => {
       if (bc.amenidades && bc.amenidades[`${n}|${f}`]) return;
       total++; cont[estado(porChave[`${b}|${n}|${f}`])]++;
-    });
+    }));
   });
   const precos = emp.unidades.filter((u) => estado(u) === 'livre' && u.preco).map((u) => u.preco);
   const pmin = precos.length ? Math.min(...precos) : null;
@@ -320,15 +348,15 @@ function iniciar(DATA) {
 
   const camera = new THREE.PerspectiveCamera(40, tam()[0] / tam()[1], 0.1, 700);
   const mobile = () => innerWidth <= 900;
-  const CAM_INICIAL = () => mobile() ? new THREE.Vector3(30, 24, 50) : new THREE.Vector3(38, 22, 44);
+  const CAM_INICIAL = () => new THREE.Vector3(...(mobile() ? cfg.cam.mob : cfg.cam.pos));
   camera.position.copy(CAM_INICIAL());
 
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.target.set(-2, 4, 3);
+  controls.target.set(...cfg.cam.alvo);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.minDistance = 8;
-  controls.maxDistance = 120;
+  controls.maxDistance = cfg.cam.max;
   controls.maxPolarAngle = Math.PI * 0.485;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.3;
@@ -365,30 +393,6 @@ function iniciar(DATA) {
   const chao = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), mat(0x34472F));
   chao.rotation.x = -Math.PI / 2; chao.position.y = -0.02; chao.receiveShadow = true; scene.add(chao);
 
-  // lote: asfalto do estacionamento, gramados e calçadas
-  caixa(32, 0.06, 36.5, mat(0x3A3C40), -5.8, 0.03, 4.9, false);
-  [[-8.5], [0], [13.3]].forEach(([z]) => caixa(19, 0.08, 7.4, mat(0x4E7A3E), 0, 0.05, z, false));
-  caixa(19, 0.08, 2.2, mat(0x4E7A3E), 0, 0.05, -4.25, false);
-  const faixa = mat(0xE2C15A, { emissive: C(0x2A2008) });
-  for (let i = 0; i < 12; i++) [-19.6, -15.4, -11.0].forEach((x) => caixa(1.8, 0.02, 0.06, faixa, x, 0.07, -11 + i * 2.6, false));
-  for (let i = 0; i < 9; i++) caixa(0.06, 0.02, 1.8, faixa, -6 + i * 1.0, 0.07, 6.9, false);
-  for (let i = 0; i < 9; i++) caixa(0.06, 0.02, 1.8, faixa, -6 + i * 1.0, 0.07, 17.6, false);
-  // rua
-  caixa(120, 0.05, 6, mat(0x2A2B2F), -5, 0.03, 26.2, false);
-  for (let i = 0; i < 24; i++) caixa(2.2, 0.02, 0.16, mat(0xEDEDED), -58 + i * 5, 0.07, 26.2, false);
-  caixa(120, 0.12, 1.4, mat(0x9C9890), -5, 0.06, 22.6, false);
-  // piscina e solário
-  const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08, metalness: 0.1 });
-  caixa(5.2, 0.12, 3.0, mat(0xE2DCCD), 7.2, 0.06, 19.4, false);
-  caixa(3.5, 0.13, 1.5, agua, 6.9, 0.07, 19.6, false);
-  caixa(1.1, 0.13, 1.0, agua, 8.9, 0.07, 19.6, false);
-  // muro (2 m) e portaria
-  const muro = mat(0x8B8D90);
-  caixa(32, 0.8, 0.2, muro, -5.8, 0.4, 23.1); caixa(32, 0.8, 0.2, muro, -5.8, 0.4, -13.3);
-  caixa(0.2, 0.8, 36.5, muro, -21.8, 0.4, 4.9); caixa(0.2, 0.8, 36.5, muro, 10.2, 0.4, 4.9);
-  caixa(2.4, 1.3, 1.8, mat(0xD9D8D4), -19.1, 0.65, 21.2);
-  caixa(2.7, 0.12, 2.1, mat(0x8C8D90), -19.1, 1.36, 21.2);
-
   // árvores (palmeiras na frente, como no render, e copas no entorno)
   const copaM = mat(0x2E5A2E), troncoM = mat(0x6A5038), palmaM = mat(0x3F7A35);
   const arvore = (x, z, s = 1) => {
@@ -404,19 +408,7 @@ function iniciar(DATA) {
       f.rotation.z = Math.cos(k / 7 * 6.28) * 1.2; f.rotation.x = -Math.sin(k / 7 * 6.28) * 1.2; f.castShadow = true; scene.add(f);
     }
   };
-  [[-9.5, 21.6], [-7.6, 21.9], [2, 21.8]].forEach(([x, z]) => palmeira(x, z));
-  [[-14, -7], [-14, -2], [-14, 4], [-14, 9], [9, -12], [9.3, 7], [5, 21.6], [9.6, 21.7], [-3, 21.8], [9.4, -4], [-12.8, 15]].forEach(([x, z], i) => arvore(x, z, 0.8 + (i % 3) * 0.2));
-  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, d = 34 + rnd() * 60; const x = Math.cos(a) * d - 5, z = Math.sin(a) * d + 5; if (z > 22 && z < 30) continue; arvore(x, z, 1.1 + rnd() * 0.9); }
-  // casas vizinhas de telhado cerâmico
-  const telhaM = mat(0xA9553A), casaM = mat(0xE8E1D4);
-  [[19, 17, 0], [19, 3, 0.2], [-32, 14, -0.1], [-33, 0, 0], [24, 38, 0.1], [-10, 40, 0], [8, 38, -0.1], [-26, 38, 0.15]].forEach(([x, z, r]) => {
-    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = r; g.scale.setScalar(0.75); scene.add(g);
-    caixa(7, 2.4, 5.5, casaM, 0, 1.2, 0, true, g);
-    const t = new THREE.Mesh(new THREE.ConeGeometry(5.2, 1.6, 4), telhaM); t.position.y = 3.2; t.rotation.y = Math.PI / 4; t.scale.set(1, 1, 0.75); t.castShadow = true; g.add(t);
-  });
-  // chaminé da antiga fábrica (aparece no render)
-  const cham = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.0, 16, 12), mat(0x8E6A55)); cham.position.set(-2, 8, -40); cham.castShadow = true; scene.add(cham);
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;  
   // Serra do Japi a oeste
   const serraM = new THREE.MeshStandardMaterial({ color: C(0x3E5A4A), roughness: 1, flatShading: true });
   [[-330, -60, 160, 30, 90], [-350, 70, 200, 38, 100], [-360, 200, 160, 26, 90], [-310, -190, 150, 22, 80], [-290, 300, 120, 18, 70]].forEach(([x, z, sx, sy, sz]) => {
@@ -434,28 +426,8 @@ function iniciar(DATA) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, toneMapped: false }));
     sp.scale.set(9, 2.8, 1); sp.renderOrder = 9; scene.add(sp); return sp;
   };
-  const marcaSol = [placa('☀ NASCENTE', 'lado do sol da manhã', '#FFC94D'), placa('☀ POENTE', 'lado do sol da tarde', '#FF8A4D')];
-  marcaSol[0].position.set(-5, 3.5, 31); marcaSol[1].position.set(-5, 3.5, -19);
   const solAstro = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 16), new THREE.MeshBasicMaterial({ color: 0xFFD27A, toneMapped: false, fog: false }));
   solAstro.position.set(-60, 26, -200); scene.add(solAstro);
-
-  // ---------- torres (pavimento tipo do projeto, em metros) ----------
-  // Medidas tiradas da planta "Pavimento tipo" (escala 1:100) da Zarin.
-  const ESC = 0.4;              // metros -> unidades da cena
-  const FH = 2.88;              // piso a piso (pé-direito 2,80 m)
-  const P = {
-    fim: 20.1,                  // meio comprimento da torre
-    barra: 3.39,                // face da barra (salas/cozinhas)
-    corredor: 0.85,
-    asa1: [12.58, 18.03],       // ala dos dormitórios da unidade de canto (|x|)
-    asa2: [3.86, 9.28],         // ala dos dormitórios da unidade de meio
-    asaZ: 6.82,                 // até onde as alas avançam
-    recuo: [9.28, 12.58], recuoZ: 4.32,
-    divisa: 10.9,               // divisa entre unidade de canto e de meio
-    nucleo: 1.91, nucleoZ: [-5.67, 4.96],
-    varFim: [18.1, 20.1], varNuc: [1.91, 3.86], varZ: 5.08
-  };
-  const COR_FACH = { clara: 0xD8D6D1, media: 0x9C9DA0, escura: 0x6E7175, amarela: 0xDDA431, coroa: 0x8E8F92, caixilho: 0xF4F4F2 };
 
   // textura com a linha de cada laje (frisos horizontais do render)
   const texLajes = (niveis) => {
@@ -481,6 +453,65 @@ function iniciar(DATA) {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true, toneMapped: false }));
     s.scale.set(3.6, 1.8, 1); s.renderOrder = 10; return s;
   };
+
+  let ESC = 0.4, FH = 2.88;
+
+  if (cfg.modelo === 'brisas') montarBrisas();
+  else {
+  // lote: asfalto do estacionamento, gramados e calçadas
+  caixa(32, 0.06, 36.5, mat(0x3A3C40), -5.8, 0.03, 4.9, false);
+  [[-8.5], [0], [13.3]].forEach(([z]) => caixa(19, 0.08, 7.4, mat(0x4E7A3E), 0, 0.05, z, false));
+  caixa(19, 0.08, 2.2, mat(0x4E7A3E), 0, 0.05, -4.25, false);
+  const faixa = mat(0xE2C15A, { emissive: C(0x2A2008) });
+  for (let i = 0; i < 12; i++) [-19.6, -15.4, -11.0].forEach((x) => caixa(1.8, 0.02, 0.06, faixa, x, 0.07, -11 + i * 2.6, false));
+  for (let i = 0; i < 9; i++) caixa(0.06, 0.02, 1.8, faixa, -6 + i * 1.0, 0.07, 6.9, false);
+  for (let i = 0; i < 9; i++) caixa(0.06, 0.02, 1.8, faixa, -6 + i * 1.0, 0.07, 17.6, false);
+  // rua
+  caixa(120, 0.05, 6, mat(0x2A2B2F), -5, 0.03, 26.2, false);
+  for (let i = 0; i < 24; i++) caixa(2.2, 0.02, 0.16, mat(0xEDEDED), -58 + i * 5, 0.07, 26.2, false);
+  caixa(120, 0.12, 1.4, mat(0x9C9890), -5, 0.06, 22.6, false);
+  // piscina e solário
+  const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08, metalness: 0.1 });
+  caixa(5.2, 0.12, 3.0, mat(0xE2DCCD), 7.2, 0.06, 19.4, false);
+  caixa(3.5, 0.13, 1.5, agua, 6.9, 0.07, 19.6, false);
+  caixa(1.1, 0.13, 1.0, agua, 8.9, 0.07, 19.6, false);
+  // muro (2 m) e portaria
+  const muro = mat(0x8B8D90);
+  caixa(32, 0.8, 0.2, muro, -5.8, 0.4, 23.1); caixa(32, 0.8, 0.2, muro, -5.8, 0.4, -13.3);
+  caixa(0.2, 0.8, 36.5, muro, -21.8, 0.4, 4.9); caixa(0.2, 0.8, 36.5, muro, 10.2, 0.4, 4.9);
+  caixa(2.4, 1.3, 1.8, mat(0xD9D8D4), -19.1, 0.65, 21.2);
+  caixa(2.7, 0.12, 2.1, mat(0x8C8D90), -19.1, 1.36, 21.2);
+
+  [[-9.5, 21.6], [-7.6, 21.9], [2, 21.8]].forEach(([x, z]) => palmeira(x, z));
+  [[-14, -7], [-14, -2], [-14, 4], [-14, 9], [9, -12], [9.3, 7], [5, 21.6], [9.6, 21.7], [-3, 21.8], [9.4, -4], [-12.8, 15]].forEach(([x, z], i) => arvore(x, z, 0.8 + (i % 3) * 0.2));
+  for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, d = 34 + rnd() * 60; const x = Math.cos(a) * d - 5, z = Math.sin(a) * d + 5; if (z > 22 && z < 30) continue; arvore(x, z, 1.1 + rnd() * 0.9); }
+  // casas vizinhas de telhado cerâmico
+  const telhaM = mat(0xA9553A), casaM = mat(0xE8E1D4);
+  [[19, 17, 0], [19, 3, 0.2], [-32, 14, -0.1], [-33, 0, 0], [24, 38, 0.1], [-10, 40, 0], [8, 38, -0.1], [-26, 38, 0.15]].forEach(([x, z, r]) => {
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = r; g.scale.setScalar(0.75); scene.add(g);
+    caixa(7, 2.4, 5.5, casaM, 0, 1.2, 0, true, g);
+    const t = new THREE.Mesh(new THREE.ConeGeometry(5.2, 1.6, 4), telhaM); t.position.y = 3.2; t.rotation.y = Math.PI / 4; t.scale.set(1, 1, 0.75); t.castShadow = true; g.add(t);
+  });
+  // chaminé da antiga fábrica (aparece no render)
+  const cham = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.0, 16, 12), mat(0x8E6A55)); cham.position.set(-2, 8, -40); cham.castShadow = true; scene.add(cham);
+  const marcaSol = [placa('☀ NASCENTE', 'lado do sol da manhã', '#FFC94D'), placa('☀ POENTE', 'lado do sol da tarde', '#FF8A4D')];
+  marcaSol[0].position.set(-5, 3.5, 31); marcaSol[1].position.set(-5, 3.5, -19);
+  // ---------- torres (pavimento tipo do projeto, em metros) ----------
+  // Medidas tiradas da planta "Pavimento tipo" (escala 1:100) da Zarin.
+  ESC = 0.4; FH = 2.88;         // metros -> cena; piso a piso 2,88 m
+  const P = {
+    fim: 20.1,                  // meio comprimento da torre
+    barra: 3.39,                // face da barra (salas/cozinhas)
+    corredor: 0.85,
+    asa1: [12.58, 18.03],       // ala dos dormitórios da unidade de canto (|x|)
+    asa2: [3.86, 9.28],         // ala dos dormitórios da unidade de meio
+    asaZ: 6.82,                 // até onde as alas avançam
+    recuo: [9.28, 12.58], recuoZ: 4.32,
+    divisa: 10.9,               // divisa entre unidade de canto e de meio
+    nucleo: 1.91, nucleoZ: [-5.67, 4.96],
+    varFim: [18.1, 20.1], varNuc: [1.91, 3.86], varZ: 5.08
+  };
+  const COR_FACH = { clara: 0xD8D6D1, media: 0x9C9DA0, escura: 0x6E7175, amarela: 0xDDA431, coroa: 0x8E8F92, caixilho: 0xF4F4F2 };
 
   Object.entries(cfg.blocos).forEach(([bloco, bc]) => {
     const g = new THREE.Group(); g.position.z = bc.z; g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
@@ -606,6 +637,148 @@ function iniciar(DATA) {
     torresInst.push({ bloco, mVid, mGuarda, mSob });
     unidades.filter((r) => r.bloco === bloco).forEach((r) => { r.mVid = mVid; r.mGuarda = mGuarda; r.mSob = mSob; });
   });
+  }
+
+  // ======================================================================
+  // Brisas do Japi (VVC): 9 torres, garagem no térreo + 8 andares.
+  // Posições e finais tirados da implantação do book da VVC (página 6).
+  // Medidas em metros, a partir da implantação (1 px a 150 dpi ~ 0,15 m).
+  // ======================================================================
+  function montarBrisas() {
+    ESC = 0.4; FH = 2.8;
+    const M = (px) => (px - 630) * 0.06, N = (py) => (py - 830) * 0.06;   // implantação -> cena
+    const asf = mat(0x3B3D41), grama = mat(0x4E7A3E), calc = mat(0xA8A49A);
+    // lote (em L) e entorno
+    caixa(M(1100) - M(160), 0.06, N(1105) - N(380), asf, (M(160) + M(1100)) / 2, 0.03, (N(380) + N(1105)) / 2, false);
+    caixa(M(1100) - M(360), 0.06, N(1460) - N(1105), asf, (M(360) + M(1100)) / 2, 0.03, (N(1105) + N(1460)) / 2, false);
+    // faixas de grama nas divisas
+    caixa(1.2, 0.09, N(1105) - N(380), grama, M(170), 0.05, (N(380) + N(1105)) / 2, false);
+    caixa(1.2, 0.09, N(1460) - N(380), grama, M(1090), 0.05, (N(380) + N(1460)) / 2, false);
+    caixa(M(1100) - M(160), 0.09, 1.0, grama, (M(160) + M(1100)) / 2, 0.05, N(388), false);
+    // rua interna central e rotatória
+    caixa(M(655) - M(605), 0.08, N(1400) - N(470), mat(0x55585D), M(630), 0.05, (N(470) + N(1400)) / 2, false);
+    const rot = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.7, 0.07, 32), mat(0x55585D)); rot.position.set(M(632), 0.05, N(435)); scene.add(rot);
+    const ilha = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.12, 24), grama); ilha.position.set(M(632), 0.08, N(435)); scene.add(ilha);
+    // vagas (linhas) entre as torres
+    const faixa = mat(0xE8E8E8);
+    [[200, 565, 560], [200, 565, 735], [200, 565, 905], [200, 565, 1075], [695, 1060, 590], [695, 1060, 760], [695, 1060, 930], [695, 1060, 1100], [695, 1060, 1270]].forEach(([x0, x1, y]) => {
+      for (let x = x0; x <= x1; x += 17) caixa(0.05, 0.02, 1.9, faixa, M(x), 0.07, N(y), false);
+    });
+    // calçada e rua da frente
+    caixa(M(1100) - M(330), 0.12, 1.6, calc, (M(330) + M(1100)) / 2, 0.06, N(1465), false);
+    caixa(140, 0.05, 5.5, mat(0x2A2B2F), 0, 0.03, N(1515), false);
+    for (let i = 0; i < 26; i++) caixa(2.2, 0.02, 0.16, mat(0xEDEDED), -65 + i * 5.2, 0.07, N(1515), false);
+    // lazer: piscinas com deck, beach tennis, quadra, portaria, salão
+    const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08, metalness: 0.1 });
+    caixa(M(1090) - M(890), 0.14, N(1372) - N(1295), mat(0xB98A5A), (M(890) + M(1090)) / 2, 0.07, (N(1295) + N(1372)) / 2, false);
+    caixa(M(1085) - M(935), 0.15, N(1355) - N(1300), agua, (M(935) + M(1085)) / 2, 0.08, (N(1300) + N(1355)) / 2, false);
+    caixa(M(925) - M(900), 0.15, N(1340) - N(1305), agua, (M(900) + M(925)) / 2, 0.08, (N(1305) + N(1340)) / 2, false);
+    caixa(M(878) - M(752), 0.14, N(1380) - N(1302), mat(0xE2B27A), (M(752) + M(878)) / 2, 0.07, (N(1302) + N(1380)) / 2, false);
+    caixa(M(530) - M(362), 0.14, N(1388) - N(1302), mat(0x3FD0B0), (M(362) + M(530)) / 2, 0.07, (N(1302) + N(1388)) / 2, false);
+    caixa(M(505) - M(390), 0.15, N(1375) - N(1315), mat(0xE09A5A), (M(390) + M(505)) / 2, 0.08, (N(1315) + N(1375)) / 2, false);
+    caixa(M(660) - M(550), 1.5, N(1390) - N(1338), mat(0x8E9194), (M(550) + M(660)) / 2, 0.75, (N(1338) + N(1390)) / 2);
+    caixa(M(665) - M(545), 0.2, N(1395) - N(1333), mat(0x3C4247), (M(545) + M(665)) / 2, 1.6, (N(1333) + N(1395)) / 2);
+    caixa(M(523) - M(437), 1.5, N(1232) - N(1175), mat(0xD9DAD6), (M(437) + M(523)) / 2, 0.75, (N(1175) + N(1232)) / 2);
+    [[575, 1150], [575, 1210], [695, 1290], [695, 1355]].forEach(([x, y]) => caixa(1.6, 1.0, 1.3, mat(0xD9DAD6), M(x), 0.5, N(y)));
+    // palmeiras e árvores
+    [[590, 545], [590, 820], [600, 1235], [670, 1260], [650, 505], [580, 1300]].forEach(([x, y]) => palmeira(M(x), N(y)));
+    for (let y = 420; y < 1100; y += 55) { arvore(M(180), N(y), 0.9 + (y % 3) * 0.1); arvore(M(1085), N(y + 20), 0.9); }
+    for (let i = 0; i < 90; i++) { const a = rnd() * Math.PI * 2, d = 50 + rnd() * 70; const x = Math.cos(a) * d, z = Math.sin(a) * d + 5; if (z > 36 && z < 44) continue; arvore(x, z, 1.1 + rnd() * 0.9); }
+    // casas vizinhas
+    const telhaM = mat(0xA9553A), casaM = mat(0xE8E1D4);
+    [[-40, 10], [-42, -6], [-38, 26], [40, 30], [44, 10], [-20, 52], [5, 52], [25, 50], [-30, 48]].forEach(([x, z], k) => {
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = (k % 3 - 1) * 0.15; g.scale.setScalar(0.75); scene.add(g);
+      caixa(7, 2.4, 5.5, casaM, 0, 1.2, 0, true, g);
+      const t = new THREE.Mesh(new THREE.ConeGeometry(5.2, 1.6, 4), telhaM); t.position.y = 3.2; t.rotation.y = Math.PI / 4; t.scale.set(1, 1, 0.75); t.castShadow = true; g.add(t);
+    });
+
+    // ---- torres ----
+    // Cada torre: corredor central no eixo x; fileira de cima (F1...) no lado -z, de baixo no +z.
+    // Larguras das unidades lidas da implantação (13 por andar; torres 5 e 6 com 12).
+    const S13 = [[-26.3, -18.8], [-18.8, -10.5], [-10.5, -2.5], [-2.5, 2.8], [2.8, 10.8], [10.8, 18.8], [18.8, 26.4]];
+    const S12top = [[-26.3, -18.8], [-18.8, -10.5], [-10.5, 0.2], [0.2, 10.8], [10.8, 18.8], [18.8, 26.4]];
+    const ZB = 4.7, ZF = 6.0, ZC = 0.6;               // face da barra, face das unidades, meio do corredor
+    const COR_B = { clara: 0xD9DAD6, verde: 0xA7B2AD, escura: 0x3E454B, base: 0x50565B, caixilho: 0xF2F2F0 };
+    Object.entries(cfg.blocos).forEach(([bloco, bc]) => {
+      const g = new THREE.Group(); g.position.set(bc.x, 0, bc.z); g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
+      const NIV = bc.andares.length, H0 = FH, H = H0 + NIV * FH;
+      const tl = texLajes(NIV + 1);
+      const mClara = mat(COR_B.clara, { map: tl }), mVerde = mat(COR_B.verde, { map: tl }), mEsc = mat(COR_B.escura), mBase = mat(COR_B.base);
+      const vol = (x0, x1, z0, z1, m, y0 = 0, y1 = H) => caixa(x1 - x0, y1 - y0, z1 - z0, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, true, g);
+      // garagem coberta no térreo (vagas sob a torre)
+      vol(-26.3, 26.4, -ZB, ZB, mBase, 0, H0);
+      // barra (corredor e fundos das unidades)
+      vol(-26.3, 26.4, -ZB, ZB, mClara, H0, H);
+      // coroamento escuro
+      vol(-26.45, 26.55, -ZF - 0.1, ZF + 0.1, mEsc, H, H + 1.1);
+      // núcleo de escada e elevador (do lado +z, posição 4)
+      vol(-2.5, 2.8, ZB, 7.2, mClara, 0, H + 3.2);
+      const linhas = { top: bc.tipo === 12 ? S12top : S13, bot: S13 };
+      const ordem = { top: bc.cima, bot: bc.baixo };     // finais em cada posição (null = núcleo)
+      const vidros = [], caixilhos = [], lajes = [], guardas = [];
+      const W = (x, y, z, w, h, face, reg) => {
+        const n = face === '+z' ? 1 : face === '-z' ? -1 : 0, nx = face === '+x' ? 1 : face === '-x' ? -1 : 0;
+        caixilhos.push([x + nx * 0.03, y, z + n * 0.03, w + 0.16, h + 0.16, face]);
+        vidros.push([x + nx * 0.06, y, z + n * 0.06, w, h, face, reg]);
+      };
+      ['top', 'bot'].forEach((lado) => {
+        const s = lado === 'top' ? -1 : 1, fz = s > 0 ? '+z' : '-z';
+        linhas[lado].forEach(([x0, x1], ci) => {
+          const final = ordem[lado][ci];
+          if (!final) return;                               // posição do núcleo
+          const larg = x1 - x0, vw = larg < 6 ? 2.0 : 2.7;  // largura da varanda
+          const lv = (ci % 2 === 0) ? 1 : -1;               // varanda alterna de lado
+          const vx0 = lv > 0 ? x1 - 0.15 - vw : x0 + 0.15, vx1 = vx0 + vw;
+          const px0 = lv > 0 ? x0 + 0.15 : vx1, px1 = lv > 0 ? vx0 : x1 - 0.15;
+          // volume da unidade avançando até a face (cor alterna clara/verde como no render)
+          vol(px0, px1, s > 0 ? ZB : -ZF, s > 0 ? ZF : -ZB, ci % 2 ? mVerde : mClara, H0, H);
+          // fundo escuro da varanda
+          vol(vx0, vx1, s > 0 ? ZB - 0.01 : -ZB - 0.2, s > 0 ? ZB + 0.2 : -ZB + 0.01, mEsc, H0, H);
+          bc.andares.forEach((andar, k) => {
+            const y0 = H0 + k * FH;
+            const u = porChave[`${bloco}|${andar}|${final}`];
+            const st = estado(u);
+            const reg = { bloco, andar, final, u, estado: st, lado: s, inst: [], grades: [] };
+            const pc = (px0 + px1) / 2, pw = px1 - px0;
+            if (pw > 3.6) { W(pc - pw * 0.22, y0 + 1.55, s * ZF, 1.3, 1.15, fz, reg); W(pc + pw * 0.22, y0 + 1.55, s * ZF, 1.3, 1.15, fz, reg); }
+            else W(pc, y0 + 1.55, s * ZF, 1.2, 1.15, fz, reg);
+            W((vx0 + vx1) / 2, y0 + 1.1, s * (ZB + 0.22), vw - 0.6, 2.1, fz, reg);   // porta da varanda
+            lajes.push([(vx0 + vx1) / 2, y0 + 0.08, s * (ZB + ZF) / 2, vw, 0.16, ZF - ZB]);
+            guardas.push([(vx0 + vx1) / 2, y0 + 0.65, s * ZF, vw, fz, reg]);
+            // janelas laterais nas pontas da torre
+            if (x0 < -26) W(-26.35, y0 + 1.55, s * 3.2, 1.0, 1.0, '-x', reg);
+            if (x1 > 26) W(26.45, y0 + 1.55, s * 3.2, 1.0, 1.0, '+x', reg);
+            const pk = new THREE.Mesh(new THREE.BoxGeometry(larg, FH - 0.1, ZF - ZC), new THREE.MeshBasicMaterial({ visible: false }));
+            pk.position.set((x0 + x1) / 2, y0 + FH / 2, s * (ZF + ZC) / 2); g.add(pk); pk.userData.reg = reg; pick.push(pk);
+            reg.pk = pk; reg.grupo = g;
+            reg.sob = [[(x0 + x1) / 2, y0 + FH / 2, s * (ZF + 0.06 + ZC) / 2, larg - 0.1, FH - 0.08, ZF + 0.06 - ZC]];
+            unidades.push(reg);
+          });
+        });
+      });
+      const r = rotulo(bloco); r.position.set(0, H + 10, 0); r.scale.set(10, 5, 1); g.add(r);
+      // instâncias (mesmo esquema do Smart)
+      const plano = new THREE.PlaneGeometry(1, 1);
+      const pos = (arr, mesh, fn) => arr.forEach((a, i) => { fn(a); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); });
+      const mCaix = new THREE.InstancedMesh(plano, mat(COR_B.caixilho, { roughness: 0.5 }), caixilhos.length);
+      pos(caixilhos, mCaix, ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, hh, 1); }); g.add(mCaix);
+      const mVid = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ toneMapped: false }), vidros.length);
+      pos(vidros, mVid, ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, hh, 1); });
+      vidros.forEach((v, i) => { v[6].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); }); g.add(mVid);
+      const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0xEFEEEA), lajes.length);
+      pos(lajes, mLaje, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); });
+      mLaje.castShadow = mLaje.receiveShadow = true; g.add(mLaje);
+      const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }), guardas.length);
+      pos(guardas, mGuarda, ([x, y, z, w, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, 1.1, 1); });
+      guardas.forEach((gd, i) => { gd[5].grades.push(i); mGuarda.setColorAt(i, new THREE.Color(0xffffff)); }); g.add(mGuarda);
+      const sobs = unidades.filter((x) => x.bloco === bloco).flatMap((x) => x.sob.map((b) => [b, x]));
+      const mSob = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.72, toneMapped: false, depthWrite: false }), sobs.length);
+      sobs.forEach(([[x, y, z, w, hh, d], rr], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); dummy.updateMatrix(); mSob.setMatrixAt(i, dummy.matrix); mSob.setColorAt(i, new THREE.Color(0xffffff)); rr.sobI = (rr.sobI || []).concat(i); });
+      mSob.visible = false; g.add(mSob);
+      torresInst.push({ bloco, mVid, mGuarda, mSob });
+      unidades.filter((x) => x.bloco === bloco).forEach((x) => { x.mVid = mVid; x.mGuarda = mGuarda; x.mSob = mSob; });
+    });
+  }
   scene.updateMatrixWorld(true);
   unidades.forEach((r) => { r.centro = new THREE.Vector3(); r.pk.getWorldPosition(r.centro); });
 
@@ -640,14 +813,14 @@ function iniciar(DATA) {
 
   // ---------- botões de filtro ----------
   const grupos = [
-    { k: 'bloco', op: [['todos', 'Todos os blocos'], ...Object.keys(cfg.blocos).map((b) => [b, `Bloco ${b}`])] },
+    { k: 'bloco', op: [['todos', cfg.modelo === 'brisas' ? 'Todas as torres' : 'Todos os blocos'], ...Object.keys(cfg.blocos).map((b) => [b, `${RB} ${b}`])] },
     { k: 'status', op: [['todos', 'Todas'], ['livre', `Só disponíveis (${cont.livre})`]] },
     { k: 'planta', op: [['todas', 'Todas as plantas'], ...cfg.plantas.map((p) => [p.k, p.rot])] },
-    { k: 'sol', op: [['todos', 'Todo sol'], ['manha', '🌅 Sol da manhã'], ['tarde', '🌇 Sol da tarde']] },
+    cfg.sol && { k: 'sol', op: [['todos', 'Todo sol'], ['manha', '🌅 Sol da manhã'], ['tarde', '🌇 Sol da tarde']] },
     { k: 'cor', op: [['fachada', 'Apartamento colorido'], ['janelas', 'Só janelas']] }
   ];
   filtro.cor = 'fachada';
-  $('#filtros').innerHTML = grupos.map((gr) => `<div class="grupo" role="group">${gr.op.map(([v, t]) => `<button data-k="${gr.k}" data-v="${v}" aria-pressed="${filtro[gr.k] === v}">${esc(t)}</button>`).join('')}</div>`).join('');
+  $('#filtros').innerHTML = grupos.filter(Boolean).map((gr) => `<div class="grupo" role="group">${gr.op.map(([v, t]) => `<button data-k="${gr.k}" data-v="${v}" aria-pressed="${filtro[gr.k] === v}">${esc(t)}</button>`).join('')}</div>`).join('');
   $('#filtros').addEventListener('click', (ev) => {
     const b = ev.target.closest('button'); if (!b) return;
     filtro[b.dataset.k] = b.dataset.v;
@@ -669,23 +842,24 @@ function iniciar(DATA) {
   let camAlvo = null;
   function focarBloco(b) {
     controls.autoRotate = false;
-    if (b === 'todos') { camAlvo = { pos: CAM_INICIAL(), alvo: new THREE.Vector3(-1, 4, 3) }; return; }
-    const bc = cfg.blocos[b];
-    const h = bc.niveis * FH * ESC / 2;
-    camAlvo = { pos: new THREE.Vector3(14, h + 7, bc.z + (b === 'A' ? 22 : 20)).add(mobile() ? new THREE.Vector3(6, 4, 10) : new THREE.Vector3()), alvo: new THREE.Vector3(0, h, bc.z) };
+    if (b === 'todos') { camAlvo = { pos: CAM_INICIAL(), alvo: new THREE.Vector3(...cfg.cam.alvo) }; return; }
+    const bc = cfg.blocos[b], bx = bc.x || 0;
+    const h = (bc.andares.length + (cfg.modelo === 'brisas' ? 1 : 0)) * FH * ESC / 2;
+    const d = cfg.modelo === 'brisas' ? 30 : 20;
+    camAlvo = { pos: new THREE.Vector3(bx + d * 0.7, h + 7, bc.z + d + (b === 'A' ? 2 : 0)).add(mobile() ? new THREE.Vector3(6, 4, 10) : new THREE.Vector3()), alvo: new THREE.Vector3(bx, h, bc.z) };
   }
   function focarUnidade(r) {
     controls.autoRotate = false;
     const bc = cfg.blocos[r.bloco];
     const p = r.centro.clone();
     const lado = r.lado;
-    const dist = mobile() ? 30 : 19;
+    const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : 1);
     camAlvo = { pos: new THREE.Vector3(p.x * 0.6 + 6, Math.max(p.y + 3, 4), p.z + lado * dist), alvo: p.clone() };
   }
 
   // ---------- painel ----------
   let selecionada = null;
-  let gradeBloco = 'A';
+  let gradeBloco = Object.keys(cfg.blocos)[0];
   const fluxoDe = (obs) => {
     const m = /fluxo da tabela:\s*ato (R\$ [\d.,]+) \+ (\d+)x (R\$ [\d.,]+) \+ (R\$ [\d.,]+) no financiamento/i.exec(obs || '');
     return m ? { ato: m[1], n: m[2], parc: m[3], fin: m[4] } : null;
@@ -694,6 +868,8 @@ function iniciar(DATA) {
     const t = [], obs = r.u && r.u.observacao || '';
     const sl = solDe(r.bloco, r.final); if (sl) t.push(`${sl === 'manha' ? '🌅' : '🌇'} ${ROT_SOL[sl]}`);
     if (/PNE/i.test(obs)) t.push('♿ Unidade PNE');
+    const vg = /Vaga (coberta|descoberta)/i.exec(obs); if (vg) t.push(`🚗 Vaga ${vg[1].toLowerCase()}`);
+    if (r.u && r.u.entrega) t.push(`🔑 Entrega ${r.u.entrega}`);
     return t;
   };
   const linkSim = (u) => `index.html#/simulador?emp=${emp.id}&un=${u.id}${u.tipologia_id ? `&tip=${u.tipologia_id}` : ''}`;
@@ -702,7 +878,7 @@ function iniciar(DATA) {
   function textoZap(r) {
     const u = r.u, tp = tipPorId[u.tipologia_id] || {}, f = fluxoDe(u.observacao);
     return [
-      `*${emp.nome}* · Bloco ${r.bloco}, apto ${numUn(r.andar, r.final)} (${andarTxt(r.andar).toLowerCase()})`,
+      `*${emp.nome}* · ${RB} ${r.bloco}, apto ${numUn(r.andar, r.final)} (${andarTxt(r.andar).toLowerCase()})`,
       `${tp.nome ? tp.nome.replace(/\s*\(.*\)/, '') + ' · ' : ''}${u.area ? m2(u.area) : ''}${tp.dormitorios ? ` · ${tp.dormitorios} dorms (${tp.suites || 0} suíte)` : ''}${tp.vagas ? ` · ${tp.vagas} vaga` : ''}`,
       extras(r).join(' · '),
       u.preco ? `Valor de tabela: *${R(u.preco)}*` : '',
@@ -728,23 +904,24 @@ function iniciar(DATA) {
     if (mover) focarUnidade(r);
     const alvo = $('#painel-rolagem');
     if (r.amen) {
-      alvo.innerHTML = `<span class="chip fora" style="color:var(--amenidade)">Área comum</span><h2 class="un-titulo">${esc(r.amen)}</h2><p class="un-sub">Bloco ${r.bloco} · térreo</p><div id="grade-box"></div>`;
+      alvo.innerHTML = `<span class="chip fora" style="color:var(--amenidade)">Área comum</span><h2 class="un-titulo">${esc(r.amen)}</h2><p class="un-sub">${RB} ${r.bloco} · térreo</p><div id="grade-box"></div>`;
       desenharGrade(); return;
     }
     const u = r.u, st = r.estado, num = numUn(r.andar, r.final);
     if (!u) {
-      alvo.innerHTML = `<span class="chip vendida">Vendida</span><h2 class="un-titulo">Bloco ${r.bloco} · Apto ${num}</h2>
-        <p class="un-sub">${andarTxt(r.andar)} · final 0${r.final}</p>
+      alvo.innerHTML = `<span class="chip vendida">Vendida</span><h2 class="un-titulo">${RB} ${r.bloco} · Apto ${num}</h2>
+        <p class="un-sub">${andarTxt(r.andar)} · final ${String(r.final).padStart(2, '0')}</p>
         <p class="nota">Não está na tabela atual da Zarin, por isso aparece como vendida.</p><div id="grade-box"></div>`;
       desenharGrade(); abrirPainel(); return;
     }
     const tp = tipPorId[u.tipologia_id] || {};
     const f = fluxoDe(u.observacao);
-    const tags = [tp.dormitorios && `${tp.dormitorios} dorms · ${tp.suites || 0} suíte`, tp.vagas && `${tp.vagas} vaga`, 'Varanda gourmet', ...extras(r)].filter(Boolean);
+    const studio = /studio/i.test(tp.nome || u.tipologia_nome || '');
+    const tags = [studio ? 'Studio' : tp.dormitorios && `${tp.dormitorios} dorms${tp.suites ? ` · ${tp.suites} suíte` : ''}`, tp.vagas && `${tp.vagas} vaga`, cfg.varanda, ...extras(r)].filter(Boolean);
     const obsLimpa = (u.observacao || '').split(' · ').filter((s) => !/^(Sol da|Unidade PNE|avaliação|fluxo da tabela)/i.test(s)).join(' · ');
     alvo.innerHTML = `
       <span class="chip ${st}">${ROT_EST[st]}</span>
-      <h2 class="un-titulo">Bloco ${r.bloco} · Apto ${num}</h2>
+      <h2 class="un-titulo">${RB} ${r.bloco} · Apto ${num}</h2>
       <p class="un-sub">${esc((tp.nome || u.tipologia_nome || '').replace(/\s*\(.*\)/, ''))}${u.area ? ' · ' + m2(u.area) : ''} · ${andarTxt(r.andar)}</p>
       <div class="tags">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       ${u.preco ? `<div class="preco">${R(u.preco)}</div>` : '<div class="preco" style="font-size:20px">Sem preço na tabela</div>'}
@@ -771,7 +948,7 @@ function iniciar(DATA) {
       <span class="chip livre">${cont.livre} disponíveis</span>
       <h2 class="un-titulo">Escolha a unidade</h2>
       <p class="vazio-msg">Toque numa janela do prédio ou num quadrado da grade. <b>Verde</b> está à venda, <b>amarelo</b> reservada e <b>vermelho</b> vendida.</p>
-      ${top ? `<div class="acoes"><button class="btn" id="mais-barata">Ver a mais em conta: Bloco ${top.bloco} · ${numUn(top.andar, top.final)} · ${Rk(top.u.preco)}</button></div>` : ''}
+      ${top ? `<div class="acoes"><button class="btn" id="mais-barata">Ver a mais em conta: ${RB} ${top.bloco} · ${numUn(top.andar, top.final)} · ${Rk(top.u.preco)}</button></div>` : ''}
       <div id="grade-box"></div>`;
     const mb = $('#mais-barata'); if (mb) mb.onclick = () => { mostrar(top); abrirPainel(); };
     desenharGrade();
@@ -780,12 +957,12 @@ function iniciar(DATA) {
   function desenharGrade() {
     const box = $('#grade-box'); if (!box) return;
     const bc = cfg.blocos[gradeBloco];
-    const finais = ['1', '2', '3', '4', '5', '6', '7', '8'];
-    let h = `<div class="grade-cab"><span class="rot">Espelho do bloco</span><div class="grade-blocos">${Object.keys(cfg.blocos).map((b) => `<button data-gb="${b}" aria-pressed="${b === gradeBloco}">${b}</button>`).join('')}</div></div>`;
-    h += `<div class="grade"><span></span>${finais.map((f) => `<span class="cab">0${f}</span>`).join('')}`;
+    const finais = bc.finais;
+    let h = `<div class="grade-cab"><span class="rot">${cfg.modelo === 'brisas' ? 'Torre' : 'Espelho do bloco'}</span><div class="grade-blocos">${Object.keys(cfg.blocos).map((b) => `<button data-gb="${b}" aria-pressed="${b === gradeBloco}">${b}</button>`).join('')}</div></div>`;
+    h += `<div class="grade${finais.length > 8 ? ' larga' : ''}" style="grid-template-columns: 40px repeat(${finais.length}, 1fr)"><span></span>${finais.map((f) => `<span class="cab">${String(f).padStart(2, '0')}</span>`).join('')}`;
     if (cfg.sol) h += `<span class="and">Sol</span>${finais.map((f) => { const sl = solDe(gradeBloco, f); return `<span class="cab sol" title="${sl ? ROT_SOL[sl] : ''}">${sl === 'manha' ? '🌅' : sl === 'tarde' ? '🌇' : ''}</span>`; }).join('')}`;
-    for (let n = bc.niveis - 1; n >= 0; n--) {
-      h += `<span class="and">${n === 0 ? 'Térreo' : n + 'º'}</span>`;
+    [...bc.andares].reverse().forEach((n) => {
+      h += `<span class="and">${n === '0' ? 'Térreo' : n + 'º'}</span>`;
       finais.forEach((f) => {
         const r = unidades.find((x) => x.bloco === gradeBloco && x.andar === String(n) && x.final === f);
         if (!r) { h += '<span></span>'; return; }
@@ -793,7 +970,7 @@ function iniciar(DATA) {
         const pr = r.u && r.u.preco ? `${Rk(r.u.preco)}` : '';
         h += `<button class="c ${r.estado}${r.ok === false ? ' apagada' : ''}${selecionada === r ? ' sel' : ''}" data-b="${r.bloco}" data-a="${r.andar}" data-f="${r.final}" title="Apto ${numUn(r.andar, r.final)} · ${ROT_EST[r.estado]}${pr ? ' · ' + pr : ''}">${numUn(r.andar, r.final)}</button>`;
       });
-    }
+    });
     box.innerHTML = h + '</div>';
     box.querySelectorAll('[data-gb]').forEach((b) => b.onclick = () => { gradeBloco = b.dataset.gb; desenharGrade(); });
     box.querySelectorAll('button.c').forEach((b) => b.onclick = () => {
@@ -835,7 +1012,7 @@ function iniciar(DATA) {
     if (r) {
       pintar(r, 0.4);
       const u = r.u;
-      dica.innerHTML = r.amen ? `<b>${esc(r.amen)}</b>` : `<b>Bloco ${r.bloco} · Apto ${numUn(r.andar, r.final)}</b><br>${u && u.area ? m2(u.area) + ' · ' : ''}${ROT_EST[r.estado]}${solDe(r.bloco, r.final) ? ' · ' + ROT_SOL[solDe(r.bloco, r.final)].toLowerCase() : ''}${u && u.preco && r.estado !== 'vendida' ? `<br><em>${R(u.preco)}</em>` : ''}`;
+      dica.innerHTML = r.amen ? `<b>${esc(r.amen)}</b>` : `<b>${RB} ${r.bloco} · Apto ${numUn(r.andar, r.final)}</b><br>${u && u.area ? m2(u.area) + ' · ' : ''}${ROT_EST[r.estado]}${solDe(r.bloco, r.final) ? ' · ' + ROT_SOL[solDe(r.bloco, r.final)].toLowerCase() : ''}${u && u.preco && r.estado !== 'vendida' ? `<br><em>${R(u.preco)}</em>` : ''}`;
       dica.style.left = ev.clientX + 14 + 'px'; dica.style.top = ev.clientY + 14 + 'px'; dica.classList.add('on');
     } else dica.classList.remove('on');
   });
