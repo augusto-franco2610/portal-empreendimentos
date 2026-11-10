@@ -259,7 +259,7 @@ const CONFIG = {
     modelo: 'niagara', rotBloco: 'Torre',
     varanda: (u) => (u && /garden/i.test(u.tipologia_nome || '') ? '🌿 Garden' : 'Varanda'),
     extrasFixos: ['2 dorms · 1 suíte'],
-    cam: { pos: [30, 20, 34], mob: [30, 28, 46], alvo: [2, 2, 0], max: 120 },
+    cam: { pos: [14, 22, 50], mob: [14, 30, 64], alvo: [2, 4, 0], max: 120 },
     // Rosa dos ventos da implantação (book da VIC, p. 16): norte para cima e à esquerda.
     // Apto 03 olha para o leste (manhã) e 02 para o oeste (tarde); 01 fica de frente para o norte e 04 para o sul.
     giroSol: 2.21, marcasSol: { centro: [2, 0], raio: 24 },
@@ -1092,9 +1092,46 @@ function iniciar(DATA) {
     const X = (px) => (px - 1195) * 0.0348, Z = (py) => (py - 540) * 0.0348;
     const ret = (x0, x1, y0, y1, m, h = 0.06, y = 0.03, sombra = false) => caixa(X(x1) - X(x0), h, Z(y1) - Z(y0), m, (X(x0) + X(x1)) / 2, y, (Z(y0) + Z(y1)) / 2, sombra);
     const asf = mat(0x45474B), grama = mat(0x4E7A3E), calc = mat(0xB9B3A6), faixa = mat(0xE8E8E8);
-    // lote, gramados de divisa e ruas
-    ret(520, 1870, 130, 955, asf);
-    ret(520, 1870, 128, 150, grama, 0.09, 0.05); ret(520, 1870, 935, 958, grama, 0.09, 0.05);
+    // ---- desnível do terreno: cotas do projeto legal aprovado (implantação e cortes AA/BB, folha 1/5) ----
+    // O terreno desce da Rua José Cain (cota ~697) até a divisa dos fundos (~677), em platôs com muros de arrimo.
+    const NV = (cota) => (cota - 677) * ESC;                               // cota em metros -> altura na cena
+    const PISO = { 1: 696.15, 2: 694.65, 3: 691.85, 4: 690.70, 5: 686.15, 6: 685.88, 7: 683.99, 8: 683.99 };   // piso térreo de cada torre
+    const COLS = [520, 830, 985, 1200, 1360, 1600, 1795, 1870];           // divisas dos platôs ao longo do terreno
+    const NORTE = [696.0, 694.0, 691.7, 688.8, 686.0, 683.84, 679.9];     // fileira das torres 1, 3, 5 e 7
+    const SUL = [694.5, 693.3, 690.54, 688.5, 685.73, 683.84, 679.9];     // fileira das torres 2, 4, 6 e 8
+    const RUA = [[520, 696.5], [700, 696.0], [830, 695.4], [900, 694.0], [985, 694.0], [1090, 691.7], [1200, 691.7], [1290, 689.57], [1360, 689.57], [1470, 687.4], [1560, 686.0], [1600, 686.0]];   // rua central (rampas)
+    const cotaRua = (px) => { for (let i = 0; i < RUA.length - 1; i++) if (px <= RUA[i + 1][0]) { const t = Math.max(0, (px - RUA[i][0]) / (RUA[i + 1][0] - RUA[i][0])); return RUA[i][1] + (RUA[i + 1][1] - RUA[i][1]) * t; } return 686.0; };
+    const natural = (x) => 4.0 - 0.16307 * x;                              // perfil natural fora do lote (cena)
+    const altura = (x, z) => {                                             // altura do piso em qualquer ponto
+      const px = x / 0.0348 + 1195, py = z / 0.0348 + 540;
+      if (px < 520 || px > 1870 || py < 130 || py > 955) return natural(x);
+      let c = COLS.length - 2; for (let i = 0; i < COLS.length - 1; i++) if (px < COLS[i + 1]) { c = i; break; }
+      if (c < 5 && py > 505 && py < 575) return NV(cotaRua(px));
+      return NV((py < 540 ? NORTE : SUL)[c]);
+    };
+    // terreno natural inclinado no lugar do chão plano
+    chao.visible = false;
+    const gTerr = new THREE.Group(); gTerr.position.y = 4.0; gTerr.rotation.z = -Math.atan(0.16307); scene.add(gTerr);
+    const terr = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), mat(0x34472F)); terr.rotation.x = -Math.PI / 2; terr.position.y = -0.05; terr.receiveShadow = true; gTerr.add(terr);
+    scene.children.forEach((o) => { if (o.isSprite) o.position.y += Math.max(0, natural(o.position.x)); });   // placas de nascente/poente
+    // platôs com muro de arrimo nas laterais
+    const arrimo = mat(0xA7A39A);
+    const plato = (x0, x1, y0, y1, cota, topo) => {
+      const h = NV(cota) + 6, m = new THREE.Mesh(new THREE.BoxGeometry(X(x1) - X(x0), h, Z(y1) - Z(y0)), [arrimo, arrimo, topo, arrimo, arrimo, arrimo]);
+      m.position.set((X(x0) + X(x1)) / 2, NV(cota) - h / 2, (Z(y0) + Z(y1)) / 2); m.castShadow = m.receiveShadow = true; scene.add(m); return m;
+    };
+    const gramaP = mat(0x56803F);
+    for (let c = 0; c < 7; c++) {
+      const topo = c === 1 || c === 3 ? asf : gramaP, meio = c >= 5;
+      plato(COLS[c], COLS[c + 1], 130, meio ? 540 : 505, NORTE[c], topo);
+      plato(COLS[c], COLS[c + 1], meio ? 540 : 575, 955, SUL[c], topo);
+    }
+    for (let px = 520; px < 1600; px += 20) plato(px, px + 20, 505, 575, cotaRua(px + 10), asf);   // rua central em rampa
+    // pavimento inferior sob a Torre 7 e o lazer (salão de festas, academia, playground e área técnica, cota 679,88)
+    const vidroSub = new THREE.Mesh(new THREE.PlaneGeometry(Z(660) - Z(160), NV(683.4) - NV(680.3)), new THREE.MeshStandardMaterial({ color: C(0x2F3B45), roughness: 0.2, metalness: 0.4 }));
+    vidroSub.position.set(X(1795) + 0.03, (NV(683.4) + NV(680.3)) / 2, (Z(160) + Z(660)) / 2); vidroSub.rotation.y = Math.PI / 2; scene.add(vidroSub);
+    const nNiv0 = scene.children.length;
+    // gramados de divisa e ruas
     ret(1795, 1872, 130, 955, grama, 0.09, 0.05); ret(1600, 1620, 130, 955, grama, 0.09, 0.05);
     ret(330, 455, -300, 1300, mat(0x2F3034));                  // Rua José Cain
     ret(455, 520, -300, 1300, calc, 0.12, 0.06);
@@ -1129,11 +1166,12 @@ function iniciar(DATA) {
     const lago = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: C(0x3E7FA0), roughness: 0.15, metalness: 0.2 }));
     lago.rotation.x = -Math.PI / 2; lago.scale.set(40, 22, 1); lago.position.copy(girar(new THREE.Vector3(0, 0.02, -95))); scene.add(lago);
 
+    scene.children.slice(nNiv0).forEach((o) => { o.position.y += altura(o.position.x, o.position.z); });
     // ---- torres: 4 aptos por andar em volta do núcleo (escada + elevador) ----
     const A = 7.3, ZN = 2.2, ZE = 10.9;           // meia largura, meia faixa do núcleo, face da torre
     const COR_N = { bege: 0xD8C7B3, bege2: 0xC9B39B, marrom: 0x6B5547, coroa: 0xBFAE9A, caixilho: 0xEDE8E1, veneziana: 0xA87A52 };
     Object.entries(cfg.blocos).forEach(([bloco, bc]) => {
-      const g = new THREE.Group(); g.position.set(bc.x, 0, bc.z); g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
+      bc.y0 = NV(PISO[bloco]) - 0.3 * ESC; const g = new THREE.Group(); g.position.set(bc.x, bc.y0, bc.z); g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
       const NIV = bc.andares.length, B = 0.3, H = B + NIV * FH;
       const tl = texLajes(NIV);
       const mBege = mat(COR_N.bege, { map: tl }), mBege2 = mat(COR_N.bege2, { map: tl }), mMarrom = mat(COR_N.marrom), mCoroa = mat(COR_N.coroa);
@@ -1423,7 +1461,8 @@ function iniciar(DATA) {
     const bc = cfg.blocos[b], bx = bc.x || 0;
     const h = (bc.andares.length + (cfg.modelo === 'brisas' ? 1 : 0)) * FH * ESC / 2;
     const d = cfg.modelo === 'brisas' ? 30 : cfg.modelo === 'nexus' ? 34 : 20;
-    camAlvo = { pos: new THREE.Vector3(bx + d * 0.7, h + 7, bc.z + d + (b === 'A' ? 2 : 0)).add(mobile() ? new THREE.Vector3(6, 4, 10) : new THREE.Vector3()), alvo: new THREE.Vector3(bx, h, bc.z) };
+    const y0 = bc.y0 || 0;
+    camAlvo = { pos: new THREE.Vector3(bx + d * 0.7, y0 + h + 7, bc.z + d + (b === 'A' ? 2 : 0)).add(mobile() ? new THREE.Vector3(6, 4, 10) : new THREE.Vector3()), alvo: new THREE.Vector3(bx, y0 + h, bc.z) };
   }
   function focarUnidade(r) {
     controls.autoRotate = false;
