@@ -14,7 +14,7 @@
 :root {
   --fundo: #07080C; --painel: rgba(17,19,26,.92); --painel-solido: #11131A; --linha: rgba(255,255,255,.09);
   --texto: #F2F2F4; --sec: #9A9CA8; --vinho: #AF2846; --vinho-claro: #FF8FAA;
-  --livre: #35D07F; --reserva: #F5B935; --vendida: #E5484D; --fora: #4A4C57; --amenidade: #FFB86B;
+  --livre: #35D07F; --reserva: #F5B935; --vendida: #E5484D; --consulta: #7FA7D9; --fora: #4A4C57; --amenidade: #FFB86B;
   --r: 14px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,6 +59,7 @@ a { color: inherit; }
 .chip.livre { color: var(--livre); background: rgba(53,208,127,.12); }
 .chip.reserva { color: var(--reserva); background: rgba(245,185,53,.12); }
 .chip.vendida { color: var(--vendida); background: rgba(229,72,77,.13); }
+.chip.consulta { color: var(--consulta); background: rgba(127,167,217,.14); }
 .chip.fora { color: #B5B7C2; background: rgba(255,255,255,.07); }
 .un-titulo { font-size: 24px; font-weight: 800; margin: 10px 0 2px; }
 .un-sub { font-size: 13px; color: var(--sec); line-height: 1.5; }
@@ -105,6 +106,7 @@ a { color: inherit; }
 .grade .c.livre { background: var(--livre); }
 .grade .c.reserva { background: var(--reserva); }
 .grade .c.vendida { background: var(--vendida); color: rgba(255,255,255,.85); }
+.grade .c.consulta { background: var(--consulta); color: rgba(10,20,40,.85); }
 .grade .c.fora { background: var(--fora); color: rgba(255,255,255,.5); }
 .grade .c.amen { background: transparent; border: 1px dashed rgba(255,184,107,.5); color: var(--amenidade); font-size: 9px; cursor: default; }
 .grade .c.apagada { opacity: .22; }
@@ -180,6 +182,7 @@ a { color: inherit; }
   <span><i style="background:var(--livre)"></i>Disponível</span>
   <span><i style="background:var(--reserva)"></i>Reservada</span>
   <span><i style="background:var(--vendida)"></i>Vendida</span>
+  <span id="leg-consulta" hidden><i style="background:var(--consulta)"></i>Status a confirmar</span>
 </div>
 
 <aside class="painel" id="painel">
@@ -274,6 +277,24 @@ const CONFIG = {
     solNota: { '1': 'face norte, sol boa parte do dia', '4': 'face sul' },
     plantas: [{ k: 'gd', rot: 'Térreo garden 69 m²', tip: [1] }, { k: 'tp', rot: 'Tipo varanda 55 m²', tip: [2] }]
   },
+  'vale-do-bosque-jundiai': {
+    // Espelho de vendas da 1ª fase (placa do stand, foto de 25/11/2026): torres B1 e B2,
+    // 12 colunas por andar, do térreo ao 15º. Volumetria ilustrativa: as colunas seguem a ordem
+    // da placa (1 a 12), não a posição real na planta do pavimento, que ainda não temos.
+    modelo: 'valebosque', rotBloco: 'Torre', varanda: 'Varanda',
+    cam: { pos: [34, 38, 96], mob: [40, 52, 124], alvo: [7, 7, 0], max: 260 }, soTabela: true,
+    numUn: (a, f) => (a === '0' ? '' : a) + String(f).padStart(2, '0'),
+    blocos: (() => {
+      const and = Array.from({ length: 16 }, (_, i) => String(i));
+      const fin = Array.from({ length: 12 }, (_, i) => String(i + 1));
+      return { B1: { x: -19, z: 0, andares: and, finais: fin }, B2: { x: 19, z: 0, andares: and, finais: fin } };
+    })(),
+    plantas: [
+      { k: 'a', rot: 'Tipo A 46,62 m²', nome: /^Tipo A\b/ }, { k: 'b', rot: 'Tipo B 53,99 m²', nome: /^Tipo B\b/ },
+      { k: 'c', rot: 'Tipo C 46,80 m²', nome: /^Tipo C\b/ }, { k: 'd', rot: 'Tipo D 40,00 m²', nome: /^Tipo D\b/ },
+      { k: 'e', rot: 'Tipo E 40,18 m²', nome: /^Tipo E\b/ }, { k: 'pne', rot: 'PNE 54,14 m²', nome: /^Tipo PNE\b/ }
+    ]
+  },
   'brisas-do-japi': {
     modelo: 'brisas', rotBloco: 'Torre', varanda: 'Varanda',
     // Norte da implantação do book (seta aponta para baixo à direita): a fileira de baixo
@@ -313,9 +334,9 @@ const Rk = (v) => 'R$ ' + (v / 1000).toLocaleString('pt-BR', { maximumFractionDi
 const m2 = (a) => String(a).replace('.', ',') + ' m²';
 const dataBR = (iso) => iso ? iso.split('-').reverse().join('/') : '';
 // Unidade que não está na tabela = vendida (regra do Franco)
-const estado = (u) => !u ? 'vendida' : /dispon/i.test(u.disponibilidade || '') ? 'livre' : /reserv/i.test(u.disponibilidade || '') ? 'reserva' : 'vendida';
-const ROT_EST = { livre: 'Disponível', reserva: 'Reservada', vendida: 'Vendida', fora: 'Fora da tabela' };
-const COR = { livre: 0x35D07F, reserva: 0xF5B935, vendida: 0xE5484D, fora: 0x3B3D47, apagada: 0x22242B, amen: 0xFFB86B };
+const estado = (u) => !u ? 'vendida' : /dispon/i.test(u.disponibilidade || '') ? 'livre' : /reserv/i.test(u.disponibilidade || '') ? 'reserva' : /confirmar/i.test(u.disponibilidade || '') ? 'consulta' : 'vendida';
+const ROT_EST = { livre: 'Disponível', reserva: 'Reservada', vendida: 'Vendida', consulta: 'Status a confirmar', fora: 'Fora da tabela' };
+const COR = { livre: 0x35D07F, reserva: 0xF5B935, vendida: 0xE5484D, consulta: 0x7FA7D9, fora: 0x3B3D47, apagada: 0x22242B, amen: 0xFFB86B };
 const andarTxt = (a) => (cfg && cfg.rotAndar ? cfg.rotAndar(a) : a === '0' ? 'Térreo' : `${a}º andar`);
 let numUn = (andar, final) => andar === '0' ? `0${final}` : `${andar}${final}`;
 const finalDe = (u) => (u.casa ? String(u.numero) : u.final || String(Number(String(u.numero).slice(-2))));
@@ -366,7 +387,8 @@ function iniciar(DATA) {
   const porChave = {};
   emp.unidades.forEach((u) => { porChave[`${u.torre}|${u.andar ?? '0'}|${finalDe(u)}`] = u; });
   const nomeUn = (r) => (cfg.nomeUn ? cfg.nomeUn(r) : `${RB} ${r.bloco} · Apto ${numUn(r.andar, r.final)}`);
-  if (cfg.modelo === 'brisas' || cfg.modelo === 'niagara' || cfg.modelo === 'nexus') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
+  if (cfg.numUn) numUn = cfg.numUn;
+  else if (cfg.modelo === 'brisas' || cfg.modelo === 'niagara' || cfg.modelo === 'nexus') numUn = (andar, final) => `${andar}${String(final).padStart(2, '0')}`;
   const RB = cfg.rotBloco;
 
   // ---------- filtros ----------
@@ -377,14 +399,15 @@ function iniciar(DATA) {
     (filtro.bloco === 'todos' || filtro.bloco === bloco) &&
     (filtro.sol === 'todos' || solDe(bloco, final) === filtro.sol) &&
     (filtro.status === 'todos' || estado(u) === 'livre') &&
-    (filtro.planta === 'todas' || (() => { const pl = cfg.plantas.find((p) => p.k === filtro.planta); return pl.tip ? !!u && pl.tip.includes(u.tipologia_id) : pl.finais.includes(final); })());
+    (filtro.planta === 'todas' || (() => { const pl = cfg.plantas.find((p) => p.k === filtro.planta); return pl.tip ? !!u && pl.tip.includes(u.tipologia_id) : pl.nome ? !!u && pl.nome.test(u.tipologia_nome || '') : pl.finais.includes(final); })());
 
   // ---------- KPIs ----------
-  const cont = { livre: 0, reserva: 0, vendida: 0, fora: 0 };
+  const cont = { livre: 0, reserva: 0, vendida: 0, consulta: 0, fora: 0 };
   let total = 0;
   Object.entries(cfg.blocos).forEach(([b, bc]) => {
     bc.andares.forEach((n) => bc.finais.forEach((f) => {
       if (bc.amenidades && bc.amenidades[`${n}|${f}`]) return;
+      if (cfg.soTabela && !porChave[`${b}|${n}|${f}`]) return;
       total++; cont[estado(porChave[`${b}|${n}|${f}`])]++;
     }));
   });
@@ -394,9 +417,10 @@ function iniciar(DATA) {
   $('#kpis').innerHTML = `
     <div class="kpi verde"><span>Disponíveis</span><b>${cont.livre}</b></div>
     <div class="kpi"><span>A partir de</span><b>${pmin ? Rk(pmin) : '—'}</b></div>
-    <div class="kpi"><span>Reserv. · vendidas</span><b>${cont.reserva} · ${cont.vendida + cont.fora}</b></div>
+    ${cont.consulta ? `<div class="kpi"><span>Status a confirmar</span><b>${cont.consulta}</b></div>` : `<div class="kpi"><span>Reserv. · vendidas</span><b>${cont.reserva} · ${cont.vendida + cont.fora}</b></div>`}
     <div class="kpi total"><span>${total} unidades no projeto</span>
-      <div class="barra"><i style="width:${pct(cont.livre)};background:var(--livre)"></i><i style="width:${pct(cont.reserva)};background:var(--reserva)"></i><i style="width:${pct(cont.vendida)};background:var(--vendida)"></i></div></div>`;
+      <div class="barra"><i style="width:${pct(cont.livre)};background:var(--livre)"></i><i style="width:${pct(cont.reserva)};background:var(--reserva)"></i><i style="width:${pct(cont.vendida)};background:var(--vendida)"></i><i style="width:${pct(cont.consulta)};background:var(--consulta)"></i></div></div>`;
+  if (cont.consulta) $('#leg-consulta').hidden = false;
 
   // ---------- cena ----------
   const C = (hex) => new THREE.Color(hex).convertSRGBToLinear();
@@ -538,6 +562,7 @@ function iniciar(DATA) {
   else if (cfg.modelo === 'niagara') montarNiagara();
   else if (cfg.modelo === 'nexus') montarNexus();
   else if (cfg.modelo === 'villagio') montarVillagio();
+  else if (cfg.modelo === 'valebosque') montarValeBosque();
   else {
   // lote: asfalto do estacionamento, gramados e calçadas
   caixa(32, 0.06, 36.5, mat(0x3A3C40), -5.8, 0.03, 4.9, false);
@@ -1083,6 +1108,111 @@ function iniciar(DATA) {
   }
 
   // ======================================================================
+  // Vale do Bosque Jundiaí (Conceito Viver): torres B1 e B2, 12 colunas por andar,
+  // térreo ao 15º. Volumetria ilustrativa inspirada no render da fachada (prédio claro
+  // com a faixa vertical cor de tijolo no núcleo). As colunas seguem a ordem do espelho
+  // de vendas do stand, não a planta do pavimento.
+  // ======================================================================
+  function montarValeBosque() {
+    ESC = 0.4; FH = 2.8;
+    Object.assign(sol.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, far: 220 }); sol.shadow.camera.updateProjectionMatrix();
+    const asf = mat(0x47494D), grama = mat(0x4E7A3E), calc = mat(0xB9B3A6), faixa = mat(0xE8E8E8);
+    // lote, rua (Estrada Velha da Boiada) e calçada
+    caixa(96, 0.06, 40, grama, 0, 0.03, -2, false);
+    caixa(84, 0.07, 6, asf, 0, 0.04, 13, false);
+    for (let x = -40; x < 42; x += 2.6) caixa(0.06, 0.02, 1.8, faixa, x, 0.09, 11.4, false);
+    caixa(200, 0.05, 7, mat(0x2F3034), 0, 0.03, 22, false);
+    for (let i = 0; i < 40; i++) caixa(2.2, 0.02, 0.16, mat(0xEDEDED), -98 + i * 5, 0.07, 22, false);
+    caixa(200, 0.12, 1.4, calc, 0, 0.06, 18, false);
+    const pl = placa('☰ ESTRADA', 'Velha da Boiada · frente', '#FFD27A'); pl.position.set(-16, 5.5, 27); pl.scale.set(13, 4, 1);
+    // edifício garagem entre as torres (fundos), lazer com piscinas ao lado
+    const gar = caixa(18, 4.2, 14, mat(0xB9BBBD), 0, 2.1, -14);
+    caixa(18.2, 0.25, 14.2, mat(0x8E9093), 0, 4.3, -14);
+    const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08 });
+    caixa(9, 0.12, 5.5, mat(0xE2DCCD), 0, 0.06, -26, false); caixa(6, 0.13, 3, agua, -1, 0.07, -26, false); caixa(1.8, 0.13, 1.8, agua, 3.2, 0.07, -26, false);
+    caixa(6, 0.12, 4, mat(0xC77A4A), 14, 0.07, -27, false);                                   // quadra
+    // portaria
+    caixa(3.2, 1.6, 2.4, mat(0x7A5A40), 0, 0.8, 11.2); caixa(4.2, 0.18, 3.2, mat(0x2E3133), 0, 1.7, 11.2);
+    // mata preservada ao fundo e árvores
+    for (let i = 0; i < 110; i++) { const x = -70 + rnd() * 140, z = -34 - rnd() * 40; arvore(x, z, 1.2 + rnd() * 0.9); }
+    [[-36, 16], [-24, 16], [-10, 16], [10, 16], [24, 16], [36, 16]].forEach(([x, z], i) => arvore(x, z, 0.9 + (i % 3) * 0.15));
+    for (let i = 0; i < 40; i++) { const a = rnd() * Math.PI * 2, d = 70 + rnd() * 60; const x = Math.cos(a) * d, z = Math.sin(a) * d; if (z > 16 && z < 28) continue; arvore(x, z, 1 + rnd() * 0.8); }
+    // casas do Bairro do Castanho do outro lado da estrada
+    const telhaM = mat(0xA9553A), casaM = mat(0xE8E1D4);
+    for (let i = 0; i < 22; i++) {
+      const x = -70 + i * 6.5 + rnd() * 2, z = 32 + rnd() * 8;
+      const g2 = new THREE.Group(); g2.position.set(x, 0, z); g2.rotation.y = (rnd() - 0.5) * 0.3; g2.scale.setScalar(0.55 + rnd() * 0.2); scene.add(g2);
+      caixa(7, 2.4, 5.5, casaM, 0, 1.2, 0, true, g2);
+      const t = new THREE.Mesh(new THREE.ConeGeometry(5.2, 1.6, 4), telhaM); t.position.y = 3.2; t.rotation.y = Math.PI / 4; t.scale.set(1, 1, 0.75); t.castShadow = true; g2.add(t);
+    }
+
+    // ---- torres (metros dentro do grupo) ----
+    const UW = 6.2, CORE = 4.4, D = 12, VZ = 1.3;     // largura da coluna, núcleo, profundidade, varanda
+    const L = 12 * UW + CORE;
+    const xCol = (c) => -L / 2 + (c - 0.5) * UW + (c > 6 ? CORE : 0);
+    Object.entries(cfg.blocos).forEach(([bloco, bc]) => {
+      const g = new THREE.Group(); g.position.set(bc.x, 0, bc.z); g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
+      const NIV = bc.andares.length, B = 0.5, H = B + NIV * FH;
+      const tl = texLajes(NIV);
+      const mClara = mat(0xE4E1DA, { map: tl }), mCinza = mat(0xA9AAAD, { map: tl }), mTijolo = mat(0x8A3A2A, { roughness: 0.85 }), mCoroa = mat(0x8E8F92);
+      const vol = (x0, x1, z0, z1, m, y0 = B, y1 = H) => caixa(x1 - x0, y1 - y0, z1 - z0, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, true, g);
+      vol(-L / 2 - 0.4, L / 2 + 0.4, -D / 2 - 0.4, D / 2 + 0.4, mat(0x8F8C86), 0, B);       // embasamento
+      vol(-L / 2, -CORE / 2 - 3 * UW, -D / 2, D / 2, mClara);
+      vol(-CORE / 2 - 3 * UW, -CORE / 2, -D / 2 + 0.6, D / 2 - 0.6, mCinza);                 // recuo cinza (ritmo do render)
+      vol(CORE / 2, CORE / 2 + 3 * UW, -D / 2 + 0.6, D / 2 - 0.6, mCinza);
+      vol(CORE / 2 + 3 * UW, L / 2, -D / 2, D / 2, mClara);
+      vol(-CORE / 2 - 3 * UW + 0.6, -CORE / 2 - 0.6, -D / 2, D / 2, mClara);
+      vol(CORE / 2 + 0.6, CORE / 2 + 3 * UW - 0.6, -D / 2, D / 2, mClara);
+      vol(-CORE / 2, CORE / 2, -D / 2 - 0.3, D / 2 + 0.3, mTijolo, B, H + 3.2);              // núcleo cor de tijolo
+      vol(-L / 2 - 0.12, L / 2 + 0.12, -D / 2 - 0.12, D / 2 + 0.12, mCoroa, H, H + 0.7);
+      const vidros = [], caixilhos = [], lajes = [], guardas = [];
+      const W = (x, y, z, w, h, face, reg) => {
+        const n = face === '+z' ? 1 : -1;
+        caixilhos.push([x, y, z + n * 0.04, w + 0.14, h + 0.14, face]);
+        vidros.push([x, y, z + n * 0.07, w, h, face, reg]);
+      };
+      bc.andares.forEach((andar, k) => {
+        const y0 = B + k * FH;
+        bc.finais.forEach((final) => {
+          const u = porChave[`${bloco}|${andar}|${final}`];
+          if (!u) return;                                                                      // posição sem unidade na placa
+          const c = Number(final), x = xCol(c);
+          const reg = { bloco, andar, final, u, estado: estado(u), lado: 1, inst: [], grades: [], normLocal: new THREE.Vector3(0, 0, 1) };
+          W(x - 1.2, y0 + 1.1, D / 2 + VZ, 1.7, 2.1, '+z', reg);                               // porta da varanda
+          W(x + 1.6, y0 + 1.55, D / 2, 1.1, 1.1, '+z', reg);                                   // dormitório
+          W(x - 1.2, y0 + 1.55, -D / 2, 1.2, 1.1, '-z', reg);                                  // fundos
+          W(x + 1.5, y0 + 1.75, -D / 2, 0.7, 0.6, '-z', reg);
+          lajes.push([x - 1.2, y0 + 0.08, D / 2 + VZ / 2, 2.6, 0.16, VZ]);
+          guardas.push([x - 1.2, y0 + 0.65, D / 2 + VZ, 2.6, '+z', reg]);
+          const pk = new THREE.Mesh(new THREE.BoxGeometry(UW - 0.1, FH - 0.1, D), new THREE.MeshBasicMaterial({ visible: false }));
+          pk.position.set(x, y0 + FH / 2, 0); g.add(pk); pk.userData.reg = reg; pick.push(pk);
+          reg.pk = pk; reg.grupo = g;
+          reg.sob = [[x, y0 + FH / 2, 0.3, UW - 0.04, FH - 0.08, D + 0.7]];
+          unidades.push(reg);
+        });
+      });
+      const r = rotulo(bloco); r.position.set(0, H + 10, 0); r.scale.set(9, 4.5, 1); g.add(r);
+      const plano = new THREE.PlaneGeometry(1, 1);
+      const posI = (arr, mesh, fn) => arr.forEach((a, i) => { fn(a); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); });
+      const plan = ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, hh, 1); };
+      const mCaix = new THREE.InstancedMesh(plano, mat(0xEFEFED, { roughness: 0.5 }), caixilhos.length); posI(caixilhos, mCaix, plan); g.add(mCaix);
+      const mVid = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ toneMapped: false }), vidros.length); posI(vidros, mVid, plan);
+      vidros.forEach((v, i) => { v[6].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); }); g.add(mVid);
+      const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0xEFEEEA), lajes.length);
+      posI(lajes, mLaje, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); }); mLaje.castShadow = true; g.add(mLaje);
+      const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }), guardas.length);
+      posI(guardas, mGuarda, ([x, y, z, w, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, 1.1, 1); });
+      guardas.forEach((gd, i) => { gd[5].grades.push(i); mGuarda.setColorAt(i, new THREE.Color(0xffffff)); }); g.add(mGuarda);
+      const sobs = unidades.filter((x) => x.bloco === bloco).flatMap((x) => x.sob.map((b) => [b, x]));
+      const mSob = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.72, toneMapped: false, depthWrite: false }), sobs.length);
+      sobs.forEach(([[x, y, z, w, hh, d], rr], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); dummy.updateMatrix(); mSob.setMatrixAt(i, dummy.matrix); mSob.setColorAt(i, new THREE.Color(0xffffff)); rr.sobI = (rr.sobI || []).concat(i); });
+      mSob.visible = false; g.add(mSob);
+      torresInst.push({ bloco, mVid, mGuarda, mSob });
+      unidades.filter((x) => x.bloco === bloco).forEach((x) => { x.mVid = mVid; x.mGuarda = mGuarda; x.mSob = mSob; x.normal = x.normLocal.clone(); });
+    });
+  }
+
+  // ======================================================================
   // Gran Vic Niágara (VIC Engenharia, Vinhedo): 8 torres baixas, 4 aptos por andar.
   // Posições da implantação do book (página 16); 1 px da imagem (2000 px) ~ 0,087 m.
   // Apto 01 e 03 do lado de cima da implantação, 02 e 04 do lado de baixo.
@@ -1531,7 +1661,7 @@ function iniciar(DATA) {
     if (b === 'todos') { camAlvo = { pos: CAM_INICIAL(), alvo: new THREE.Vector3(...cfg.cam.alvo) }; return; }
     const bc = cfg.blocos[b], bx = bc.x || 0;
     const h = (bc.andares.length + (cfg.modelo === 'brisas' ? 1 : 0)) * FH * ESC / 2;
-    const d = cfg.modelo === 'brisas' ? 30 : cfg.modelo === 'nexus' ? 34 : 20;
+    const d = cfg.modelo === 'brisas' ? 30 : cfg.modelo === 'nexus' ? 34 : cfg.modelo === 'valebosque' ? 44 : 20;
     const y0 = bc.y0 || 0;
     camAlvo = { pos: new THREE.Vector3(bx + d * 0.7, y0 + h + 7, bc.z + d + (b === 'A' ? 2 : 0)).add(mobile() ? new THREE.Vector3(6, 4, 10) : new THREE.Vector3()), alvo: new THREE.Vector3(bx, y0 + h, bc.z) };
   }
@@ -1540,7 +1670,7 @@ function iniciar(DATA) {
     const bc = cfg.blocos[r.bloco];
     const p = r.centro.clone();
     const lado = r.lado;
-    const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : cfg.modelo === 'villagio' ? 1.5 : 1);
+    const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : cfg.modelo === 'villagio' ? 1.5 : cfg.modelo === 'valebosque' ? 2.1 : 1);
     if (r.normal) { camAlvo = { pos: p.clone().add(r.normal.clone().multiplyScalar(dist)).add(new THREE.Vector3(0, cfg.modelo === 'villagio' ? 12 : 3, 0)), alvo: p.clone() }; return; }
     camAlvo = { pos: new THREE.Vector3(p.x * 0.6 + 6, Math.max(p.y + 3, 4), p.z + lado * dist), alvo: p.clone() };
   }
@@ -1622,12 +1752,12 @@ function iniciar(DATA) {
         <div><span>Financiamento</span><b>${f.fin}</b></div></div>` : ''}
       ${obsLimpa ? `<p class="nota">${esc(obsLimpa)}</p>` : ''}
       <div class="acoes">
-        ${st === 'livre' ? `<a class="btn prim" target="_top" href="${linkSim(u)}">Simular esta unidade</a>` : `<p class="nota" style="margin:0">${st === 'reserva' ? 'Reservada ou em processo. Vale consultar a Zarin, pode voltar à venda.' : 'Unidade vendida.'}</p>`}
+        ${st === 'livre' ? `<a class="btn prim" target="_top" href="${linkSim(u)}">Simular esta unidade</a>` : `<p class="nota" style="margin:0">${st === 'consulta' ? `Status de venda e preço ainda não informados. Confirme com a ${esc(emp.incorporadora || 'incorporadora')} antes de oferecer.` : st === 'reserva' ? `Reservada ou em processo. Vale consultar a ${esc(emp.incorporadora || 'incorporadora')}, pode voltar à venda.` : 'Unidade vendida.'}</p>`}
         ${st !== 'vendida' ? `<a class="btn zap" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(textoZap(r))}">Enviar no WhatsApp</a>` : ''}
       </div>
       ${tp.planta_url ? `<span class="rot">Planta</span><img class="planta" src="${esc(tp.planta_url)}" alt="Planta ${esc(tp.nome || '')}" loading="lazy">` : ''}
       <div id="grade-box"></div>
-      <p class="nota">Imagens ilustrativas. ${tab ? `Tabela ${esc(tab.versao)} de ${dataBR(tab.data_referencia)}.` : ''} Confirme a disponibilidade com a Zarin antes de propor.</p>`;
+      <p class="nota">Imagens ilustrativas. ${tab ? `Tabela ${esc(tab.versao)} de ${dataBR(tab.data_referencia)}.` : ''} Confirme a disponibilidade com a ${esc(emp.incorporadora || 'incorporadora')} antes de propor.</p>`;
     const img = $('.planta', alvo); if (img) img.onclick = () => { $('#lupa img').src = img.src; $('#lupa').classList.add('on'); };
     desenharGrade();
   }
@@ -1635,9 +1765,9 @@ function iniciar(DATA) {
   function inicioPainel() {
     const top = unidades.filter((r) => r.estado === 'livre').sort((a, b) => (a.u.preco || 9e9) - (b.u.preco || 9e9))[0];
     $('#painel-rolagem').innerHTML = `
-      <span class="chip livre">${cont.livre} disponíveis</span>
+      ${cont.consulta ? `<span class="chip consulta">${cont.consulta} unidades · status a confirmar</span>` : `<span class="chip livre">${cont.livre} disponíveis</span>`}
       <h2 class="un-titulo">Escolha a unidade</h2>
-      <p class="vazio-msg">${cfg.modelo === 'villagio' ? 'Toque numa casa ou no número dela na lista.' : 'Toque numa janela do prédio ou num quadrado da grade.'} <b>Verde</b> está à venda, <b>amarelo</b> reservada e <b>vermelho</b> vendida.</p>
+      <p class="vazio-msg">${cfg.modelo === 'villagio' ? 'Toque numa casa ou no número dela na lista.' : 'Toque numa janela do prédio ou num quadrado da grade.'} ${cont.consulta ? '<b>Azul</b>: unidade sem status de venda informado ainda.' : '<b>Verde</b> está à venda, <b>amarelo</b> reservada e <b>vermelho</b> vendida.'}</p>
       ${top ? `<div class="acoes"><button class="btn" id="mais-barata">Ver a mais em conta: ${nomeUn(top)} · ${Rk(top.u.preco)}</button></div>` : ''}
       <div id="grade-box"></div>`;
     const mb = $('#mais-barata'); if (mb) mb.onclick = () => { mostrar(top); abrirPainel(); };
