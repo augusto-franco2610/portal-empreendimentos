@@ -890,6 +890,78 @@ main#view.emp-view { padding-top: 0; }
 .cond-box.camp-box { border-color: rgba(226,54,95,.55); background: rgba(226,54,95,.10); }
 .cond-box.camp-box b { color: #FF7A9A; }
 
+
+/* ===== Estilo "vidro sobre ambiente" (referência: vídeo Glassy Dashboard enviado pelo Franco em 25/11/2026) =====
+   Mesma paleta (fundo escuro + vinho): foto de um living desfocada ao fundo, painéis de vidro fosco
+   bem arredondados, lateral flutuante só com ícones e topo sem barra, com pílulas. */
+:root { --vidro: rgba(24, 18, 22, .42); --vidro-forte: rgba(18, 14, 18, .62); --vidro-borda: rgba(255, 255, 255, .13); --vidro-luz: rgba(255, 255, 255, .14); --raio-vidro: 24px; }
+body::before { content: ''; position: fixed; inset: -30px; z-index: 0; pointer-events: none;
+  background: radial-gradient(90% 70% at 85% 0%, rgba(226, 54, 95, .22), transparent 60%), linear-gradient(180deg, rgba(6, 6, 10, .58), rgba(6, 6, 10, .78)), url(img/fundo-vidro.jpg) center / cover no-repeat;
+  filter: saturate(1.05); }
+#fx-fundo { opacity: .28; mix-blend-mode: screen; }
+
+/* vidro */
+.painel, .card, .tipo, .vazio, .filtros, .mini, .hero, .kpi, .boasvindas, .mat, .mapa-info, .lazer-item, .doc, .exp-nav, .plantas-abas button, .cond-box, .inv-bloco {
+  background: linear-gradient(160deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02) 55%), var(--vidro);
+  border: 1px solid var(--vidro-borda);
+  -webkit-backdrop-filter: blur(26px) saturate(150%); backdrop-filter: blur(26px) saturate(150%);
+  box-shadow: inset 0 1px 0 var(--vidro-luz), 0 24px 60px -28px rgba(0, 0, 0, .75);
+}
+.painel, .card, .tipo, .vazio, .hero, .boasvindas, .mapa-info { border-radius: var(--raio-vidro); }
+.kpi, .mat, .doc, .cond-box { border-radius: 20px; }
+.kpi::before { display: none; }
+.boasvindas::after { opacity: .35; }
+.card, .kpi, .mat, .painel.flutua { transition: transform .35s var(--curva), box-shadow .35s var(--curva), border-color .3s, background .3s; }
+.kpi:hover, .mat:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, .22); }
+.card:hover { border-color: rgba(226, 54, 95, .5); }
+.card .foto { border-radius: calc(var(--raio-vidro) - 6px); margin: 8px 8px 0; }
+.card .botoes { border-top-color: rgba(255, 255, 255, .08); }
+.resumo { background: linear-gradient(160deg, rgba(226, 54, 95, .14), rgba(255, 255, 255, .02) 60%), var(--vidro-forte); border-radius: var(--raio-vidro); -webkit-backdrop-filter: blur(26px) saturate(150%); backdrop-filter: blur(26px) saturate(150%); }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=search], input[type=tel], input:not([type]), select, textarea {
+  background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .14); border-radius: 14px; }
+
+/* pílulas */
+.btn { border-radius: 999px; padding-left: 18px; padding-right: 18px; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .14); }
+.btn:hover { background: rgba(255, 255, 255, .14); transform: translateY(-1px); }
+.btn.prim { background: linear-gradient(135deg, #F04670, #AF2846); border-color: rgba(255, 255, 255, .18); }
+.chip { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+/* lateral flutuante só com ícones (computador) */
+@media (min-width: 921px) {
+  :root { --lateral: 112px; }
+  .lateral { inset: 16px auto 16px 16px; width: 76px; padding: 16px 0; align-items: center; border-radius: 30px;
+    background: rgba(14, 10, 14, .5); border: 1px solid var(--vidro-borda); -webkit-backdrop-filter: blur(28px) saturate(150%); backdrop-filter: blur(28px) saturate(150%);
+    box-shadow: inset 0 1px 0 var(--vidro-luz), 0 30px 60px -30px rgba(0, 0, 0, .8); }
+  .lateral .marca { padding: 0 0 22px; justify-content: center; }
+  .lateral .marca > div { display: none; }
+  .lateral .marca svg { width: 40px; height: 40px; border-radius: 12px; }
+  .nav { gap: 8px; align-items: center; }
+  .nav a { width: 48px; height: 48px; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0; color: #C9C9D2; }
+  .nav a svg { width: 21px; height: 21px; }
+  .nav a:hover { transform: none; background: rgba(255, 255, 255, .12); color: #fff; }
+  .nav a.ativo { background: #F4F1EE; color: #1A1216; box-shadow: 0 8px 24px -8px rgba(255, 255, 255, .45); }
+  .nav a.ativo::before { display: none; }
+  .nav a::after { content: attr(data-t); position: absolute; left: calc(100% + 14px); top: 50%; transform: translate(-6px, -50%); opacity: 0; pointer-events: none; white-space: nowrap;
+    font-size: .8rem; font-weight: 600; color: #fff; padding: 7px 12px; border-radius: 999px; background: rgba(20, 16, 20, .82); border: 1px solid var(--vidro-borda);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); transition: opacity .2s, transform .2s var(--curva); }
+  .nav a:hover::after, .nav a:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
+  .lateral .rodape { border: 0; padding: 0; display: grid; place-items: center; }
+  .lateral .rodape > b, .lateral .rodape > span, .lateral .rodape > * { display: none; }
+  .lateral .rodape::before { content: attr(data-ini); width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #F04670, #AF2846); box-shadow: 0 0 0 3px rgba(255, 255, 255, .12); }
+  .topo { background: transparent; border-bottom: 0; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 18px 32px 6px; }
+  .busca input[type=search] { background: rgba(20, 16, 20, .45); -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%); border-color: var(--vidro-borda); box-shadow: inset 0 1px 0 var(--vidro-luz); padding-top: 12px; padding-bottom: 12px; }
+  .exp-hero { margin: -84px -32px 0; border-radius: 0 0 0 32px; }
+  .exp-nav { top: calc(78px + env(safe-area-inset-top, 0px)); }
+}
+/* celular: barras de vidro */
+@media (max-width: 920px) {
+  .topo { background: rgba(10, 8, 12, .55); -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%); border-bottom-color: var(--vidro-borda); }
+  .barra-mob { margin: 0 10px calc(10px + env(safe-area-inset-bottom, 0px)); inset: auto 0 0 0; border-radius: 26px; border: 1px solid var(--vidro-borda); background: rgba(14, 10, 14, .62); -webkit-backdrop-filter: blur(26px) saturate(150%); backdrop-filter: blur(26px) saturate(150%); box-shadow: inset 0 1px 0 var(--vidro-luz), 0 20px 40px -20px rgba(0, 0, 0, .8); padding-bottom: 6px; }
+  .barra-mob a { border-radius: 18px; }
+  .barra-mob a.ativo { background: #F4F1EE; color: #1A1216; }
+  .painel, .card, .boasvindas, .mapa-info { border-radius: 20px; }
+}
 </style>
 <div id="app" aria-live="polite"></div>
 <div id="toasts" role="status" aria-live="polite"></div>
@@ -2064,13 +2136,13 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
         <aside class="lateral">
           <a class="marca" href="#/">${MARCA}<div><b>${nome}</b><span>Ferramenta do corretor</span></div></a>
           <nav class="nav" aria-label="Principal">
-            <a href="#/" data-r="inicio">${IC.inicio}Início</a>
-            <a href="#/empreendimentos" data-r="emp">${IC.predio}Empreendimentos</a>
-            <a href="#/simulador" data-r="sim">${IC.calc}Simulador de financiamento</a>
-            <a href="#/simulacoes" data-r="sims">${IC.pasta}Simulações salvas</a>
-            <a href="#/sobre" data-r="sobre">${IC.config}Seus dados e fontes</a>
+            <a href="#/" data-r="inicio" data-t="Início">${IC.inicio}Início</a>
+            <a href="#/empreendimentos" data-r="emp" data-t="Empreendimentos">${IC.predio}Empreendimentos</a>
+            <a href="#/simulador" data-r="sim" data-t="Simulador de financiamento">${IC.calc}Simulador de financiamento</a>
+            <a href="#/simulacoes" data-r="sims" data-t="Simulações salvas">${IC.pasta}Simulações salvas</a>
+            <a href="#/sobre" data-r="sobre" data-t="Seus dados e fontes">${IC.config}Seus dados e fontes</a>
           </nav>
-          <div class="rodape"><b id="rod-nome">${esc(corretor().nome || 'Corretor')}</b><span class="sec">Dados de ${dataBR(DATA.gerado_em.slice(0, 10))}</span></div>
+          <div class="rodape" data-ini="${esc(((corretor().nome || 'C').trim()[0] || 'C').toUpperCase())}"><b id="rod-nome">${esc(corretor().nome || 'Corretor')}</b><span class="sec">Dados de ${dataBR(DATA.gerado_em.slice(0, 10))}</span></div>
         </aside>
         <div class="conteudo">
           <header class="topo">
