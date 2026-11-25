@@ -966,15 +966,16 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 /* ===== Transições líquidas (vidro que escorre) — pedido do Franco em 25/11/2026 ===== */
 :root { --mola: cubic-bezier(.34, 1.45, .5, 1); --liquido: cubic-bezier(.22, 1, .36, 1); }
 /* troca de tela: a antiga derrete e a nova se espalha como uma gota a partir do toque (sem depender de View Transitions) */
-#view.liq-sai { animation: derreter .2s ease-in both; pointer-events: none; }
-#view.liq-entra { animation: espalhar .55s var(--liquido) both; }
-@keyframes derreter { to { opacity: 0; transform: translate3d(0, 10px, 0) scale(.98); } }
-@keyframes espalhar { from { opacity: 0; transform: translate3d(0, 14px, 0) scale(.985); } to { opacity: 1; transform: none; } }
-.gota-tela { position: fixed; z-index: 40; left: 0; top: 0; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .30), rgba(255, 170, 190, .14) 45%, rgba(226, 54, 95, .06) 70%, transparent 72%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); will-change: transform, opacity; animation: gota-tela .7s var(--liquido) forwards; }
-@keyframes gota-tela { 0% { transform: translate3d(var(--gx), var(--gy), 0) scale(.15); opacity: .9; border-radius: 50%; }
-  40% { border-radius: 46% 54% 50% 50% / 52% 48% 52% 48%; opacity: .75; } 100% { transform: translate3d(var(--gx), var(--gy), 0) scale(var(--gs)); opacity: 0; } }
+/* derretimento: a tela antiga estica e escorre, uma cortina de vidro vinho com gotas desce cobrindo tudo
+   e continua descendo, revelando a página nova (só transform/opacidade: leve no celular) */
+#view.liq-sai { transform-origin: 50% 0; animation: derreter .46s cubic-bezier(.55, 0, .75, .3) both; pointer-events: none; }
+#view.liq-entra { animation: assentar .7s var(--liquido) both; }
+@keyframes derreter { 0% { transform: none; opacity: 1; } 100% { transform: translate3d(0, 70px, 0) scale(1.02, 1.22); opacity: .15; } }
+@keyframes assentar { 0% { transform: translate3d(0, -26px, 0) scale(1, 1.05); opacity: .2; transform-origin: 50% 0; } 60% { transform: translate3d(0, 4px, 0) scale(1, .99); opacity: 1; } 100% { transform: none; opacity: 1; } }
+.derrete { position: fixed; z-index: 45; left: -2vw; top: 0; width: 104vw; height: 160vh; pointer-events: none; will-change: transform;
+  transform: translate3d(0, -165vh, 0); animation: derrete-desce 1.05s cubic-bezier(.62, .05, .3, 1) forwards; }
+.derrete svg { width: 100%; height: 100%; display: block; }
+@keyframes derrete-desce { 0% { transform: translate3d(0, -165vh, 0); } 44% { transform: translate3d(0, -17vh, 0); } 56% { transform: translate3d(0, -13vh, 0); } 100% { transform: translate3d(0, 112vh, 0); } }
 /* gota que escorre até o item ativo do menu */
 .nav { position: relative; }
 .nav-gota { position: absolute; z-index: 0; left: 0; top: 0; width: 0; height: 0; border-radius: 999px; pointer-events: none; opacity: 0;
@@ -2180,19 +2181,29 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
     if (!v || (window.FX && FX.reduzido)) return fn();
     if (trocando) clearTimeout(trocando);
     const raiz = document.documentElement; raiz.classList.add('trocando');
-    // gota de vidro que se espalha do toque (uma camada só, animada por transform: leve no celular)
-    const [gx, gy] = ultimoToque || [innerWidth / 2, innerHeight * .4];
-    const gota = document.createElement('i'); gota.className = 'gota-tela';
-    gota.style.setProperty('--gx', gx + 'px'); gota.style.setProperty('--gy', gy + 'px');
-    gota.style.setProperty('--gs', String(Math.ceil(Math.hypot(Math.max(gx, innerWidth - gx), Math.max(gy, innerHeight - gy)) / 60) + 1));
-    document.body.appendChild(gota); setTimeout(() => gota.remove(), 800);
+    // cortina de vidro derretido com gotas de tamanhos diferentes (forma nova a cada troca)
+    const cort = document.createElement('div'); cort.className = 'derrete'; cort.setAttribute('aria-hidden', 'true');
+    const n = innerWidth < 700 ? 7 : 11, base = 72;
+    // borda de cima também ondulada: o vidro escorre e deixa um rastro líquido
+    let topo = 'M0 9 ';
+    for (let k = 0; k < n; k++) { const x0 = (k / n) * 100, x1 = ((k + 1) / n) * 100, a = 2 + Math.random() * 7; topo += `C${(x0 + (x1 - x0) * .3).toFixed(2)} ${(9 - a).toFixed(2)} ${(x0 + (x1 - x0) * .7).toFixed(2)} ${(9 - a).toFixed(2)} ${x1.toFixed(2)} 9 `; }
+    let d = topo + `V${base} `, borda = `M100 ${base} `;
+    for (let k = n; k > 0; k--) {
+      const x1 = (k / n) * 100, x0 = ((k - 1) / n) * 100, larg = x1 - x0, meio = x0 + larg * (.35 + Math.random() * .3);
+      const fundo = base + 5 + Math.random() * 16, w = larg * (.26 + Math.random() * .16);
+      const seg = `L${(meio + w).toFixed(2)} ${base} C${(meio + w * .6).toFixed(2)} ${base + 4} ${(meio + w * .9).toFixed(2)} ${(fundo - 4).toFixed(2)} ${meio.toFixed(2)} ${fundo.toFixed(2)} C${(meio - w * .9).toFixed(2)} ${(fundo - 4).toFixed(2)} ${(meio - w * .6).toFixed(2)} ${base + 4} ${(meio - w).toFixed(2)} ${base} L${x0.toFixed(2)} ${base} `;
+      d += seg; borda += seg;
+    }
+    d += 'Z';
+    cort.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14080E" stop-opacity=".96"/><stop offset=".62" stop-color="#3A0F20" stop-opacity=".95"/><stop offset="1" stop-color="#8E1F38" stop-opacity=".96"/></linearGradient></defs><path d="${d}" fill="url(#dg)"/><path d="${topo}" fill="none" stroke="rgba(255,190,205,.35)" stroke-width=".5" vector-effect="non-scaling-stroke" transform="translate(0 .5)"/><path d="${borda}" fill="none" stroke="rgba(255,190,205,.55)" stroke-width=".5" vector-effect="non-scaling-stroke" transform="translate(0 -.4)"/></svg>`;
+    document.body.appendChild(cort); setTimeout(() => cort.remove(), 1150);
     v.classList.remove('liq-entra'); void v.offsetWidth; v.classList.add('liq-sai');
-    await new Promise((ok) => setTimeout(ok, 190));
+    await new Promise((ok) => setTimeout(ok, 470));
     try { await fn(); } finally {
       const v2 = document.getElementById('view');
       if (v2) {
         v2.classList.remove('liq-sai'); void v2.offsetWidth; v2.classList.add('liq-entra');
-        trocando = setTimeout(() => { v2.classList.remove('liq-entra'); raiz.classList.remove('trocando'); if (window.FX_retomar) FX_retomar(); }, 600);
+        trocando = setTimeout(() => { v2.classList.remove('liq-entra'); raiz.classList.remove('trocando'); if (window.FX_retomar) FX_retomar(); }, 760);
       } else raiz.classList.remove('trocando');
       ultimoToque = null;
     }
