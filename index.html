@@ -986,9 +986,14 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 @keyframes gota-h { 0% { } 35% { scale: 1.35 .8; border-radius: 40%; } 70% { scale: .94 1.06; } 100% { scale: 1 1; } }
 .nav a, .barra-mob a { z-index: 1; }
 .nav a.ativo, .barra-mob a.ativo { background: transparent !important; box-shadow: none !important; color: #1A1216 !important; transition: color .35s .12s; }
-/* brilho líquido que segue o dedo ou o mouse no vidro */
+/* brilho líquido que segue o dedo ou o mouse no vidro (posição e intensidade animáveis) */
+@property --mx { syntax: '<length>'; inherits: false; initial-value: -400px; }
+@property --my { syntax: '<length>'; inherits: false; initial-value: -400px; }
+@property --ba { syntax: '<number>'; inherits: false; initial-value: 0; }
+.painel, .card, .kpi, .mat, .boasvindas, .mapa-info, .resumo, .vazio, .doc, .cond-box, .filtros { --mx: -400px; --my: -400px; --ba: 0; transition: --mx .18s ease-out, --my .18s ease-out, --ba .45s ease; }
+.brilha { --ba: 1; }
 .painel, .card, .kpi, .mat, .boasvindas, .mapa-info, .resumo, .vazio, .doc, .cond-box, .filtros {
-  background-image: radial-gradient(280px circle at var(--mx, -400px) var(--my, -400px), rgba(255, 255, 255, .13), rgba(255, 140, 170, .05) 40%, transparent 70%),
+  background-image: radial-gradient(280px circle at var(--mx) var(--my), rgba(255, 255, 255, calc(.18 * var(--ba))), rgba(255, 140, 170, calc(.07 * var(--ba))) 40%, transparent 70%),
     linear-gradient(160deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02) 55%);
 }
 /* botões gelatina */
@@ -2251,13 +2256,26 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   // ponto do toque: a nova tela se espalha a partir dele; brilho do vidro segue o dedo/mouse
   addEventListener('pointerdown', (ev) => { ultimoToque = [ev.clientX, ev.clientY]; }, { passive: true, capture: true });
   const VIDROS = '.painel, .card, .kpi, .mat, .boasvindas, .mapa-info, .resumo, .vazio, .doc, .cond-box, .filtros';
-  addEventListener('pointermove', (ev) => {
-    if (ev.pointerType !== 'mouse') return;
-    const el = ev.target.closest && ev.target.closest(VIDROS); if (!el) return;
+  // um painel por vez, no máximo uma atualização por quadro (leve também no celular, inclusive rolando)
+  let brilhoEl = null, brilhoPos = null, brilhoRaf = 0, brilhoSolta = 0;
+  const brilhoAplicar = () => {
+    brilhoRaf = 0; if (!brilhoPos) return;
+    const [x, y] = brilhoPos, alvo = document.elementFromPoint(x, y), el = alvo && alvo.closest ? alvo.closest(VIDROS) : null;
+    if (brilhoEl && brilhoEl !== el) brilhoEl.classList.remove('brilha');
+    brilhoEl = el; if (!el) return;
     const r = el.getBoundingClientRect();
-    el.style.setProperty('--mx', (ev.clientX - r.left) + 'px'); el.style.setProperty('--my', (ev.clientY - r.top) + 'px');
-  }, { passive: true });
-  addEventListener('pointerout', (ev) => { const el = ev.target.closest && ev.target.closest(VIDROS); if (el && !el.contains(ev.relatedTarget)) { el.style.removeProperty('--mx'); el.style.removeProperty('--my'); } }, { passive: true });
+    el.style.setProperty('--mx', Math.round(x - r.left) + 'px'); el.style.setProperty('--my', Math.round(y - r.top) + 'px');
+    el.classList.add('brilha');
+  };
+  const brilhoMover = (x, y) => { clearTimeout(brilhoSolta); brilhoPos = [x, y]; if (!brilhoRaf) brilhoRaf = requestAnimationFrame(brilhoAplicar); };
+  const brilhoSoltar = (atraso) => { clearTimeout(brilhoSolta); brilhoSolta = setTimeout(() => { if (brilhoEl) brilhoEl.classList.remove('brilha'); brilhoEl = null; brilhoPos = null; }, atraso); };
+  addEventListener('pointermove', (ev) => { if (ev.pointerType === 'mouse') brilhoMover(ev.clientX, ev.clientY); }, { passive: true });
+  addEventListener('pointerdown', (ev) => brilhoMover(ev.clientX, ev.clientY), { passive: true });
+  addEventListener('touchmove', (ev) => { const t = ev.touches[0]; if (t) brilhoMover(t.clientX, t.clientY); }, { passive: true });
+  addEventListener('touchend', () => brilhoSoltar(350), { passive: true });
+  addEventListener('touchcancel', () => brilhoSoltar(350), { passive: true });
+  document.addEventListener('mouseleave', () => brilhoSoltar(0));
+  addEventListener('pointerout', (ev) => { if (ev.pointerType === 'mouse' && brilhoEl && !brilhoEl.contains(ev.relatedTarget)) { brilhoEl.classList.remove('brilha'); brilhoEl = null; } }, { passive: true });
 
   function montarShell(rota) {
     const app = $('#app');
