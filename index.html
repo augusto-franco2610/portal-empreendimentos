@@ -460,7 +460,6 @@ body { background: var(--bg); color: var(--texto); }
 .painel, .card, .tipo, .vazio, .filtros, .mini, .hero {
   background: linear-gradient(180deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .025));
   border: 1px solid var(--linha);
-  backdrop-filter: blur(14px) saturate(130%);
 }
 .painel { position: relative; }
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=search], input[type=tel], input:not([type]), select, textarea {
@@ -897,16 +896,17 @@ main#view.emp-view { padding-top: 0; }
 :root { --vidro: rgba(24, 18, 22, .42); --vidro-forte: rgba(18, 14, 18, .62); --vidro-borda: rgba(255, 255, 255, .13); --vidro-luz: rgba(255, 255, 255, .14); --raio-vidro: 24px; }
 body::before { content: ''; position: fixed; inset: -30px; z-index: 0; pointer-events: none;
   background: radial-gradient(90% 70% at 85% 0%, rgba(226, 54, 95, .22), transparent 60%), linear-gradient(180deg, rgba(6, 6, 10, .58), rgba(6, 6, 10, .78)), url(img/fundo-vidro.jpg) center / cover no-repeat;
-  filter: saturate(1.05); }
-#fx-fundo { opacity: .28; mix-blend-mode: screen; }
+  transform: translateZ(0); }
+#fx-fundo { opacity: .22; }
 
 /* vidro */
 .painel, .card, .tipo, .vazio, .filtros, .mini, .hero, .kpi, .boasvindas, .mat, .mapa-info, .lazer-item, .doc, .exp-nav, .plantas-abas button, .cond-box, .inv-bloco {
   background: linear-gradient(160deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02) 55%), var(--vidro);
   border: 1px solid var(--vidro-borda);
-  -webkit-backdrop-filter: blur(26px) saturate(150%); backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   box-shadow: inset 0 1px 0 var(--vidro-luz), 0 24px 60px -28px rgba(0, 0, 0, .75);
 }
+.exp-nav, .mapa-info { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
 .painel, .card, .tipo, .vazio, .hero, .boasvindas, .mapa-info { border-radius: var(--raio-vidro); }
 .kpi, .mat, .doc, .cond-box { border-radius: 20px; }
 .kpi::before { display: none; }
@@ -916,15 +916,15 @@ body::before { content: ''; position: fixed; inset: -30px; z-index: 0; pointer-e
 .card:hover { border-color: rgba(226, 54, 95, .5); }
 .card .foto { border-radius: calc(var(--raio-vidro) - 6px); margin: 8px 8px 0; }
 .card .botoes { border-top-color: rgba(255, 255, 255, .08); }
-.resumo { background: linear-gradient(160deg, rgba(226, 54, 95, .14), rgba(255, 255, 255, .02) 60%), var(--vidro-forte); border-radius: var(--raio-vidro); -webkit-backdrop-filter: blur(26px) saturate(150%); backdrop-filter: blur(26px) saturate(150%); }
+.resumo { background: linear-gradient(160deg, rgba(226, 54, 95, .14), rgba(255, 255, 255, .02) 60%), var(--vidro-forte); border-radius: var(--raio-vidro); }
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=search], input[type=tel], input:not([type]), select, textarea {
   background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .14); border-radius: 14px; }
 
 /* pílulas */
-.btn { border-radius: 999px; padding-left: 18px; padding-right: 18px; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .14); }
+.btn { border-radius: 999px; padding-left: 18px; padding-right: 18px; -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .14); }
 .btn:hover { background: rgba(255, 255, 255, .14); transform: translateY(-1px); }
 .btn.prim { background: linear-gradient(135deg, #F04670, #AF2846); border-color: rgba(255, 255, 255, .18); }
-.chip { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.chip { -webkit-backdrop-filter: none; backdrop-filter: none; }
 
 /* lateral flutuante só com ícones (computador) */
 @media (min-width: 921px) {
@@ -966,20 +966,20 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 /* ===== Transições líquidas (vidro que escorre) — pedido do Franco em 25/11/2026 ===== */
 :root { --mola: cubic-bezier(.34, 1.45, .5, 1); --liquido: cubic-bezier(.22, 1, .36, 1); }
 /* troca de tela: a antiga derrete e a nova se espalha como uma gota a partir do toque (sem depender de View Transitions) */
-#view.liq-sai { animation: derreter .26s var(--liquido) both; pointer-events: none; }
-#view.liq-entra { animation: espalhar .85s var(--liquido) both; }
-@keyframes derreter { to { opacity: 0; transform: scale(.97) translateY(12px); filter: blur(20px) saturate(1.5); } }
-@keyframes espalhar {
-  0% { -webkit-clip-path: circle(0 at var(--tx, 50%) var(--ty, 140px)); clip-path: circle(0 at var(--tx, 50%) var(--ty, 140px)); filter: blur(20px) saturate(1.7) brightness(1.15); transform: scale(1.02); opacity: .4; }
-  50% { filter: blur(6px) saturate(1.25); opacity: 1; }
-  99% { -webkit-clip-path: circle(170vmax at var(--tx, 50%) var(--ty, 140px)); clip-path: circle(170vmax at var(--tx, 50%) var(--ty, 140px)); }
-  100% { -webkit-clip-path: none; clip-path: none; filter: none; transform: none; opacity: 1; }
-}
+#view.liq-sai { animation: derreter .2s ease-in both; pointer-events: none; }
+#view.liq-entra { animation: espalhar .55s var(--liquido) both; }
+@keyframes derreter { to { opacity: 0; transform: translate3d(0, 10px, 0) scale(.98); } }
+@keyframes espalhar { from { opacity: 0; transform: translate3d(0, 14px, 0) scale(.985); } to { opacity: 1; transform: none; } }
+.gota-tela { position: fixed; z-index: 40; left: 0; top: 0; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .30), rgba(255, 170, 190, .14) 45%, rgba(226, 54, 95, .06) 70%, transparent 72%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); will-change: transform, opacity; animation: gota-tela .7s var(--liquido) forwards; }
+@keyframes gota-tela { 0% { transform: translate3d(var(--gx), var(--gy), 0) scale(.15); opacity: .9; border-radius: 50%; }
+  40% { border-radius: 46% 54% 50% 50% / 52% 48% 52% 48%; opacity: .75; } 100% { transform: translate3d(var(--gx), var(--gy), 0) scale(var(--gs)); opacity: 0; } }
 /* gota que escorre até o item ativo do menu */
 .nav { position: relative; }
 .nav-gota { position: absolute; z-index: 0; left: 0; top: 0; width: 0; height: 0; border-radius: 999px; pointer-events: none; opacity: 0;
   background: radial-gradient(120% 90% at 30% 20%, #FFFFFF, #ECE6E2 60%, #D9CFCB); box-shadow: inset 0 -3px 8px rgba(120, 80, 90, .25), 0 10px 26px -8px rgba(255, 255, 255, .45);
-  transition: transform .62s var(--mola), width .62s var(--mola), height .62s var(--mola), opacity .3s; will-change: transform; }
+  transition: transform .62s var(--mola), opacity .3s; will-change: transform; }
 .nav-gota.mexe { animation: gota-v .62s var(--liquido); }
 .barra-mob .nav-gota.mexe { animation: gota-h .62s var(--liquido); }
 @keyframes gota-v { 0% { border-radius: 999px; } 35% { border-radius: 40% 40% 50% 50% / 60% 60% 40% 40%; scale: .82 1.32; } 70% { scale: 1.08 .92; } 100% { scale: 1 1; } }
@@ -999,9 +999,9 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 @keyframes onda-liquida { 0% { transform: scale(0); opacity: .9; border-radius: 50%; } 60% { border-radius: 46% 54% 52% 48%; } 100% { transform: scale(4.5); opacity: 0; } }
 .exp-nav-ind { transition: transform .6s var(--mola), width .6s var(--mola) !important; }
 /* cartões e painéis entram "condensando" */
-@keyframes surgir { 0% { opacity: 0; transform: translateY(22px) scale(.96); filter: blur(14px) saturate(1.5); } 60% { filter: blur(2px); } 100% { opacity: 1; transform: none; filter: none; } }
-#view > *, .cards > .card, .kpis > div { animation-duration: .8s; animation-timing-function: var(--liquido); }
-.revelar.pre { transform: translateY(34px) scale(.97); filter: blur(14px) saturate(1.4); transition: opacity 1s var(--liquido), transform 1s var(--liquido), filter 1s var(--liquido); }
+@keyframes surgir { 0% { opacity: 0; transform: translate3d(0, 22px, 0) scale(.97); } 100% { opacity: 1; transform: none; } }
+#view > *, .cards > .card, .kpis > div { animation-duration: .7s; animation-timing-function: var(--liquido); }
+.revelar.pre { transform: translate3d(0, 34px, 0) scale(.97); filter: none; transition: opacity .9s var(--liquido), transform .9s var(--liquido); }
 /* nome do item no menu escorre para fora */
 @media (min-width: 921px) {
   .nav a::after { transform-origin: left center; transform: translate(-10px, -50%) scale(.6, .8); filter: blur(6px); transition: opacity .25s, transform .5s var(--mola), filter .35s; }
@@ -1791,7 +1791,9 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   window.addEventListener('resize', tamanho, { passive: true });
   window.addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
   tamanho();
+  let fxParado = false;
   function quadro(t) {
+    fxParado = false;
     const s = (t - t0) / 1000;
     ctx.clearRect(0, 0, W, H);
     // brilhos
@@ -1830,10 +1832,11 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
       ctx.fillStyle = dm < 30000 ? 'rgba(255,143,170,0.9)' : 'rgba(220,220,235,0.45)';
       ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill();
     }
-    if (!reduzido && !document.hidden) requestAnimationFrame(quadro);
+    if (!reduzido && !toque && !document.hidden && !document.documentElement.classList.contains('trocando')) requestAnimationFrame(quadro); else fxParado = true;
   }
   requestAnimationFrame(quadro);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && !reduzido) requestAnimationFrame(quadro); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !reduzido && !toque && fxParado) requestAnimationFrame(quadro); });
+  window.FX_retomar = () => { if (!reduzido && !toque && !document.hidden && fxParado) requestAnimationFrame(quadro); };
 
   // ---------- Contadores ----------
   const memoria = new Map();
@@ -2171,17 +2174,21 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
     const v = document.getElementById('view');
     if (!v || (window.FX && FX.reduzido)) return fn();
     if (trocando) clearTimeout(trocando);
+    const raiz = document.documentElement; raiz.classList.add('trocando');
+    // gota de vidro que se espalha do toque (uma camada só, animada por transform: leve no celular)
+    const [gx, gy] = ultimoToque || [innerWidth / 2, innerHeight * .4];
+    const gota = document.createElement('i'); gota.className = 'gota-tela';
+    gota.style.setProperty('--gx', gx + 'px'); gota.style.setProperty('--gy', gy + 'px');
+    gota.style.setProperty('--gs', String(Math.ceil(Math.hypot(Math.max(gx, innerWidth - gx), Math.max(gy, innerHeight - gy)) / 60) + 1));
+    document.body.appendChild(gota); setTimeout(() => gota.remove(), 800);
     v.classList.remove('liq-entra'); void v.offsetWidth; v.classList.add('liq-sai');
-    await new Promise((ok) => setTimeout(ok, 240));
+    await new Promise((ok) => setTimeout(ok, 190));
     try { await fn(); } finally {
       const v2 = document.getElementById('view');
       if (v2) {
-        const r = v2.getBoundingClientRect();
-        const x = ultimoToque ? ultimoToque[0] - r.left : r.width / 2, y = ultimoToque ? Math.min(Math.max(ultimoToque[1], 0), innerHeight) - r.top : 140;
-        v2.style.setProperty('--tx', Math.round(x) + 'px'); v2.style.setProperty('--ty', Math.round(y) + 'px');
         v2.classList.remove('liq-sai'); void v2.offsetWidth; v2.classList.add('liq-entra');
-        trocando = setTimeout(() => v2.classList.remove('liq-entra'), 950);
-      }
+        trocando = setTimeout(() => { v2.classList.remove('liq-entra'); raiz.classList.remove('trocando'); if (window.FX_retomar) FX_retomar(); }, 600);
+      } else raiz.classList.remove('trocando');
       ultimoToque = null;
     }
   };
@@ -2233,7 +2240,8 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
       const g = $('.nav-gota', nav), a = $('a.ativo', nav); if (!g) return;
       if (!a || !a.offsetWidth) { g.style.opacity = 0; return; }
       const primeira = !g.dataset.ok; if (primeira) g.style.transition = 'none';
-      g.style.width = a.offsetWidth + 'px'; g.style.height = a.offsetHeight + 'px';
+      if (g.style.width !== a.offsetWidth + 'px') g.style.width = a.offsetWidth + 'px';
+      if (g.style.height !== a.offsetHeight + 'px') g.style.height = a.offsetHeight + 'px';
       g.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; g.style.opacity = 1;
       if (primeira) { void g.offsetWidth; g.style.transition = ''; g.dataset.ok = '1'; }
       else { g.classList.remove('mexe'); void g.offsetWidth; g.classList.add('mexe'); }
@@ -2244,6 +2252,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   addEventListener('pointerdown', (ev) => { ultimoToque = [ev.clientX, ev.clientY]; }, { passive: true, capture: true });
   const VIDROS = '.painel, .card, .kpi, .mat, .boasvindas, .mapa-info, .resumo, .vazio, .doc, .cond-box, .filtros';
   addEventListener('pointermove', (ev) => {
+    if (ev.pointerType !== 'mouse') return;
     const el = ev.target.closest && ev.target.closest(VIDROS); if (!el) return;
     const r = el.getBoundingClientRect();
     el.style.setProperty('--mx', (ev.clientX - r.left) + 'px'); el.style.setProperty('--my', (ev.clientY - r.top) + 'px');
