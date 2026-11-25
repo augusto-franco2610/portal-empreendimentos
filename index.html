@@ -962,6 +962,53 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   .barra-mob a.ativo { background: #F4F1EE; color: #1A1216; }
   .painel, .card, .boasvindas, .mapa-info { border-radius: 20px; }
 }
+
+/* ===== Transições líquidas (vidro que escorre) — pedido do Franco em 25/11/2026 ===== */
+:root { --mola: cubic-bezier(.34, 1.45, .5, 1); --liquido: cubic-bezier(.22, 1, .36, 1); }
+/* troca de tela: a nova página se espalha como uma gota a partir do toque; a antiga derrete */
+main#view { view-transition-name: tela; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(tela) { animation-duration: .75s; animation-timing-function: var(--liquido); }
+::view-transition-old(tela) { animation: .55s var(--liquido) both derreter; }
+::view-transition-new(tela) { animation: .8s var(--liquido) both espalhar; }
+@keyframes derreter { to { opacity: 0; transform: scale(.965) translateY(10px); filter: blur(18px) saturate(1.4); } }
+@keyframes espalhar {
+  0% { clip-path: circle(0 at var(--tx, 50%) var(--ty, 30%)); filter: blur(18px) saturate(1.7) brightness(1.15); transform: scale(1.015); }
+  55% { filter: blur(5px) saturate(1.25); }
+  100% { clip-path: circle(150vmax at var(--tx, 50%) var(--ty, 30%)); filter: none; transform: none; }
+}
+/* gota que escorre até o item ativo do menu */
+.nav { position: relative; }
+.nav-gota { position: absolute; z-index: 0; left: 0; top: 0; width: 0; height: 0; border-radius: 999px; pointer-events: none; opacity: 0;
+  background: radial-gradient(120% 90% at 30% 20%, #FFFFFF, #ECE6E2 60%, #D9CFCB); box-shadow: inset 0 -3px 8px rgba(120, 80, 90, .25), 0 10px 26px -8px rgba(255, 255, 255, .45);
+  transition: transform .62s var(--mola), width .62s var(--mola), height .62s var(--mola), opacity .3s; will-change: transform; }
+.nav-gota.mexe { animation: gota-v .62s var(--liquido); }
+.barra-mob .nav-gota.mexe { animation: gota-h .62s var(--liquido); }
+@keyframes gota-v { 0% { border-radius: 999px; } 35% { border-radius: 40% 40% 50% 50% / 60% 60% 40% 40%; scale: .82 1.32; } 70% { scale: 1.08 .92; } 100% { scale: 1 1; } }
+@keyframes gota-h { 0% { } 35% { scale: 1.35 .8; border-radius: 40%; } 70% { scale: .94 1.06; } 100% { scale: 1 1; } }
+.nav a, .barra-mob a { z-index: 1; }
+.nav a.ativo, .barra-mob a.ativo { background: transparent !important; box-shadow: none !important; color: #1A1216 !important; transition: color .35s .12s; }
+/* brilho líquido que segue o dedo ou o mouse no vidro */
+.painel, .card, .kpi, .mat, .boasvindas, .mapa-info, .resumo, .vazio, .doc, .cond-box, .filtros {
+  background-image: radial-gradient(280px circle at var(--mx, -400px) var(--my, -400px), rgba(255, 255, 255, .13), rgba(255, 140, 170, .05) 40%, transparent 70%),
+    linear-gradient(160deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02) 55%);
+}
+/* botões gelatina */
+.btn, .nav a, .barra-mob a, .exp-nav a, .chip, .lazer-item { transition: transform .5s var(--mola), background .3s, border-color .3s, box-shadow .35s, color .3s; }
+.btn:active, .lazer-item:active { transform: scale(.94); transition-duration: .12s; }
+.btn:hover { transform: translateY(-2px) scale(1.02); }
+.btn .onda { background: radial-gradient(circle, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 70%); filter: blur(4px); animation: onda-liquida .75s var(--liquido); }
+@keyframes onda-liquida { 0% { transform: scale(0); opacity: .9; border-radius: 50%; } 60% { border-radius: 46% 54% 52% 48%; } 100% { transform: scale(4.5); opacity: 0; } }
+.exp-nav-ind { transition: transform .6s var(--mola), width .6s var(--mola) !important; }
+/* cartões e painéis entram "condensando" */
+@keyframes surgir { 0% { opacity: 0; transform: translateY(22px) scale(.96); filter: blur(14px) saturate(1.5); } 60% { filter: blur(2px); } 100% { opacity: 1; transform: none; filter: none; } }
+#view > *, .cards > .card, .kpis > div { animation-duration: .8s; animation-timing-function: var(--liquido); }
+.revelar.pre { transform: translateY(34px) scale(.97); filter: blur(14px) saturate(1.4); transition: opacity 1s var(--liquido), transform 1s var(--liquido), filter 1s var(--liquido); }
+/* nome do item no menu escorre para fora */
+@media (min-width: 921px) {
+  .nav a::after { transform-origin: left center; transform: translate(-10px, -50%) scale(.6, .8); filter: blur(6px); transition: opacity .25s, transform .5s var(--mola), filter .35s; }
+  .nav a:hover::after, .nav a:focus-visible::after { transform: translate(0, -50%) scale(1); filter: none; }
+}
 </style>
 <div id="app" aria-live="polite"></div>
 <div id="toasts" role="status" aria-live="polite"></div>
@@ -2127,6 +2174,34 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   }
   const vazio = (t, txt, acoes = '') => `<div class="vazio"><h3>${esc(t)}</h3><p>${txt}</p>${acoes}</div>`;
 
+  // gota líquida que escorre até o item ativo do menu (lateral e barra do celular)
+  function moverGotas() {
+    $$('.nav, .barra-mob').forEach((nav) => {
+      const g = $('.nav-gota', nav), a = $('a.ativo', nav); if (!g) return;
+      if (!a || !a.offsetWidth) { g.style.opacity = 0; return; }
+      const primeira = !g.dataset.ok; if (primeira) g.style.transition = 'none';
+      g.style.width = a.offsetWidth + 'px'; g.style.height = a.offsetHeight + 'px';
+      g.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; g.style.opacity = 1;
+      if (primeira) { void g.offsetWidth; g.style.transition = ''; g.dataset.ok = '1'; }
+      else { g.classList.remove('mexe'); void g.offsetWidth; g.classList.add('mexe'); }
+    });
+  }
+  addEventListener('resize', () => moverGotas());
+  // ponto do toque: a nova tela se espalha a partir dele; brilho do vidro segue o dedo/mouse
+  addEventListener('pointerdown', (ev) => {
+    const v = document.getElementById('view'); if (!v) return;
+    const r = v.getBoundingClientRect(), vh = innerHeight;
+    document.documentElement.style.setProperty('--tx', Math.round(ev.clientX - r.left) + 'px');
+    document.documentElement.style.setProperty('--ty', Math.round(Math.min(Math.max(ev.clientY, 0), vh) - Math.max(r.top, 0)) + 'px');
+  }, { passive: true, capture: true });
+  const VIDROS = '.painel, .card, .kpi, .mat, .boasvindas, .mapa-info, .resumo, .vazio, .doc, .cond-box, .filtros';
+  addEventListener('pointermove', (ev) => {
+    const el = ev.target.closest && ev.target.closest(VIDROS); if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (ev.clientX - r.left) + 'px'); el.style.setProperty('--my', (ev.clientY - r.top) + 'px');
+  }, { passive: true });
+  addEventListener('pointerout', (ev) => { const el = ev.target.closest && ev.target.closest(VIDROS); if (el && !el.contains(ev.relatedTarget)) { el.style.removeProperty('--mx'); el.style.removeProperty('--my'); } }, { passive: true });
+
   function montarShell(rota) {
     const app = $('#app');
     if (!$('.shell', app)) {
@@ -2135,7 +2210,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
       <div class="shell">
         <aside class="lateral">
           <a class="marca" href="#/">${MARCA}<div><b>${nome}</b><span>Ferramenta do corretor</span></div></a>
-          <nav class="nav" aria-label="Principal">
+          <nav class="nav" aria-label="Principal"><i class="nav-gota" aria-hidden="true"></i>
             <a href="#/" data-r="inicio" data-t="Início">${IC.inicio}Início</a>
             <a href="#/empreendimentos" data-r="emp" data-t="Empreendimentos">${IC.predio}Empreendimentos</a>
             <a href="#/simulador" data-r="sim" data-t="Simulador de financiamento">${IC.calc}Simulador de financiamento</a>
@@ -2152,7 +2227,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
           </header>
           <main id="view" tabindex="-1"></main>
         </div>
-        <nav class="barra-mob" aria-label="Principal (celular)">
+        <nav class="barra-mob" aria-label="Principal (celular)"><i class="nav-gota" aria-hidden="true"></i>
           <a href="#/" data-r="inicio">${IC.inicio}Início</a>
           <a href="#/simulador" data-r="sim">${IC.calc}Simular</a>
           <a href="#/simulacoes" data-r="sims">${IC.pasta}Salvas</a>
@@ -2165,6 +2240,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
     if (typeof atualizarBarraCmp === 'function') setTimeout(atualizarBarraCmp);
     const chave = rota === '/' || rota === '' ? 'inicio' : rota.startsWith('/empreendimentos') || rota.startsWith('/e/') ? 'emp' : rota.startsWith('/simulador') ? 'sim' : rota.startsWith('/simulacoes') ? 'sims' : rota.startsWith('/sobre') ? 'sobre' : '';
     $$('[data-r]').forEach((a) => a.classList.toggle('ativo', a.dataset.r === chave));
+    moverGotas();
     window.scrollTo(0, 0);
   }
 
