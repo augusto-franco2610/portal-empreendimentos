@@ -59,6 +59,7 @@ a { color: inherit; }
 .chip.livre { color: var(--livre); background: rgba(53,208,127,.12); }
 .chip.reserva { color: var(--reserva); background: rgba(245,185,53,.12); }
 .chip.vendida { color: var(--vendida); background: rgba(229,72,77,.13); }
+#leg-consulta[hidden] { display: none !important; }
 .chip.consulta { color: var(--consulta); background: rgba(127,167,217,.14); }
 .chip.fora { color: #B5B7C2; background: rgba(255,255,255,.07); }
 .un-titulo { font-size: 24px; font-weight: 800; margin: 10px 0 2px; }
@@ -224,6 +225,17 @@ const CONFIG = {
       C: { manha: ['1', '3', '5', '7'], tarde: ['2', '4', '6', '8'] }
     },
     plantas: [{ k: 'canto', rot: 'Canto 50 m²', finais: ['1', '2', '7', '8'] }, { k: 'meio', rot: 'Meio 47 m²', finais: ['3', '4', '5', '6'] }]
+  },
+  'lumy-art-jundiai': {
+    // Tabela da Lumy de 24/11/2026: 176 apartamentos do 3º ao 17º andar, finais 01 a 16 (térreo e 2º: embasamento e loja).
+    modelo: 'lumy', rotBloco: 'Torre', varanda: 'Varanda', soTabela: true,
+    cam: { pos: [44, 34, -46], mob: [56, 46, -62], alvo: [2, 14, 0], max: 240 },
+    numUn: (a, f) => a + String(f).padStart(2, '0'),
+    blocos: { '1': { x: 0, z: 0, andares: Array.from({ length: 15 }, (_, i) => String(i + 3)), finais: Array.from({ length: 16 }, (_, i) => String(i + 1)) } },
+    plantas: [
+      { k: 'a', rot: '2 dorms', tip: [17] }, { k: 'b', rot: '2 dorms c/ suíte', tip: [18, 19] },
+      { k: 'c', rot: '1 dorm + office', nome: /Office/i }, { k: 'ph', rot: 'Penthouse', nome: /Penthouse/i }
+    ]
   },
   'villagio-dos-eucaliptos': {
     modelo: 'villagio', rotBloco: 'Casa', varanda: 'Quintal',
@@ -563,6 +575,7 @@ function iniciar(DATA) {
   else if (cfg.modelo === 'nexus') montarNexus();
   else if (cfg.modelo === 'villagio') montarVillagio();
   else if (cfg.modelo === 'valebosque') montarValeBosque();
+  else if (cfg.modelo === 'lumy') montarLumy();
   else {
   // lote: asfalto do estacionamento, gramados e calçadas
   caixa(32, 0.06, 36.5, mat(0x3A3C40), -5.8, 0.03, 4.9, false);
@@ -1252,6 +1265,155 @@ function iniciar(DATA) {
   }
 
   // ======================================================================
+  // Lumy Art Jundiaí (Lumy / IGN): torre única, apartamentos do 3º ao 17º andar (16 finais).
+  // Volume pelo pavimento tipo e pelos renders do book: barra comprida com os finais de frente
+  // para o bosque (norte), núcleo de elevadores, 3 alas para o sul, torre escalonada (cada coluna
+  // sobe até o último andar que tem unidade na tabela, com terraços verdes), embasamento de
+  // madeira com plantas, loja de vidro na esquina e o painel artístico na ponta voltada para a
+  // Av. Armando Giassetti. O painel é só um mosaico colorido de referência, não a obra.
+  // Posição de cada final no andar ilustrativa (o pavimento tipo do book não numera os finais).
+  // ======================================================================
+  function montarLumy() {
+    ESC = 0.4; FH = 2.9;
+    Object.assign(sol.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, far: 220 }); sol.shadow.camera.updateProjectionMatrix();
+    const g = new THREE.Group(); g.scale.setScalar(ESC); scene.add(g);
+    const bloco = Object.keys(cfg.blocos)[0], bc = cfg.blocos[bloco]; blocosGrupo[bloco] = g;
+    const cx = (w, h, d, m, x, y, z, sombra = true) => caixa(w, h, d, m, x, y, z, sombra, g);
+    // terreno, avenida a leste, bosque ao norte, lazer a oeste
+    cx(150, 0.1, 90, mat(0x4E7A3E), -5, 0.05, 2, false);
+    cx(12, 0.12, 140, mat(0x2F3034), 52, 0.07, 0, false);
+    for (let i = 0; i < 18; i++) cx(0.3, 0.04, 4.5, mat(0xEDEDED), 52, 0.15, -64 + i * 8, false);
+    cx(2.4, 0.3, 140, mat(0xBDB6A8), 45, 0.15, 0, false);
+    const pl = placa('AV. GIASSETTI', 'Armando Giassetti · UNIP', '#FFD27A'); pl.position.set(21, 4, 14); pl.scale.set(12, 3.6, 1);
+    const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08 });
+    cx(16, 0.3, 26, mat(0xE2DCCD), -62, 0.15, 8, false); cx(7, 0.35, 15, agua, -63, 0.17, 8, false); cx(3.5, 0.35, 3.5, agua, -58, 0.17, -2, false);
+    cx(60, 0.2, 8, mat(0xB7A98F), -20, 0.12, -24, false);                                  // trilha
+    for (let i = 0; i < 70; i++) { const x = -60 + Math.random() * 100, z = -18 - Math.random() * 22; arvore(x * ESC, z * ESC, 0.9 + Math.random() * 0.7); }
+    for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, d = 70 + Math.random() * 50; arvore(Math.cos(a) * d, Math.sin(a) * d, 1 + Math.random() * 0.8); }
+    [[40, 16], [40, 4], [40, -10], [40, 24]].forEach(([x, z]) => arvore(x * ESC, z * ESC, 1));
+
+    // ---- posições dos finais (metros) ----
+    const UW = 6.3, D = 7.5, CORR = 1.8, CORE = 7;
+    const P = {};                                        // final -> { x, z, w, d, face }
+    for (let f = 1; f <= 5; f++) P[f] = { x: -36 + (f - 0.5) * UW, z: -D / 2, w: UW, d: D, face: '-z' };
+    const xc0 = -36 + 5 * UW;                            // núcleo
+    for (let f = 6; f <= 9; f++) P[f] = { x: xc0 + CORE + (f - 5.5) * UW, z: -D / 2, w: UW, d: D, face: '-z' };
+    P[10] = { x: xc0 + CORE + 4 * UW + 3.75, z: -D / 2 - 0.5, w: 7.5, d: D + 1, face: '-z' };
+    const WL = 6.5, WD = 6.3;                            // alas para o sul: unidade 6,5 (x) × 6,3 (z), corredor a oeste
+    const ala = (xw, finais) => finais.forEach((f, k) => { P[f] = { x: xw, z: CORR + (k + 0.5) * WD, w: WL, d: WD, face: '+x', ala: xw }; });
+    ala(P[4].x + 1, [11]); ala(xc0 + CORE + 1 * UW, [12, 13]); ala(xc0 + CORE + 3 * UW, [14, 15, 16]);
+    const B = 7.2;                                       // embasamento (térreo + 2º)
+    const yAnd = (a) => B + (Number(a) - 3) * FH;
+    const maxA = {};
+    emp.unidades.forEach((u) => { const f = Number(u.final); maxA[f] = Math.max(maxA[f] || 0, Number(u.andar)); });
+    const topoF = (f) => yAnd(maxA[f] || 3) + FH;
+    const tl = texLajes(15);
+    const mBranco = mat(0xE6E4E0, { map: tl }), mCinza = mat(0xA6A6A8, { map: tl }), mMarrom = mat(0x5A3A2A), mVerde = mat(0x3E6B32, { roughness: 0.9 });
+    // embasamento de madeira com faixas de plantas e a loja de vidro na esquina
+    const texMad = (() => {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d');
+      x.fillStyle = '#7B5236'; x.fillRect(0, 0, 512, 128);
+      for (let i = 0; i < 512; i += 6) { x.fillStyle = i % 12 ? 'rgba(0,0,0,.18)' : 'rgba(255,210,160,.08)'; x.fillRect(i, 0, 3, 128); }
+      x.fillStyle = '#3E6B32'; [0, 58].forEach((y) => { for (let i = 0; i < 512; i += 4) x.fillRect(i, y, 3, 8 + Math.random() * 14); });
+      const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.repeat.set(6, 1); t.encoding = THREE.sRGBEncoding; return t;
+    })();
+    const mMad = new THREE.MeshStandardMaterial({ map: texMad, roughness: 0.85 });
+    const emb = new THREE.Mesh(new THREE.BoxGeometry(84, B, 30), [mMad, mMad, mat(0x8E8F92), mat(0x8E8F92), mMad, mMad]);
+    emb.position.set(-2, B / 2, 6); emb.castShadow = emb.receiveShadow = true; g.add(emb);
+    const vidro = new THREE.MeshStandardMaterial({ color: C(0x1E2A30), emissive: C(0x6B4A2A), emissiveIntensity: 0.35, roughness: 0.1, metalness: 0.3 });
+    cx(10, 7, 12, vidro, 38, 3.5, 14); cx(10.6, 0.3, 12.6, mat(0xEDEDED), 38, 7.1, 14); cx(10.6, 0.3, 12.6, mat(0xEDEDED), 38, 3.6, 14);
+    // painel artístico (mosaico de triângulos coloridos) na ponta leste
+    const texMural = (() => {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 1024; const x = c.getContext('2d');
+      const cores = ['#1F6FB5', '#2BA4D9', '#F2C12E', '#E8562A', '#D62E6E', '#6CBF4B', '#8E44AD', '#F28C28', '#1AA39A'];
+      const s = 64;
+      for (let yy = 0; yy < 1024; yy += s) for (let xx = 0; xx < 256; xx += s) {
+        [[[xx, yy], [xx + s, yy], [xx, yy + s]], [[xx + s, yy], [xx + s, yy + s], [xx, yy + s]]].forEach((tri) => {
+          x.fillStyle = cores[Math.floor(Math.random() * cores.length)]; x.beginPath(); x.moveTo(...tri[0]); x.lineTo(...tri[1]); x.lineTo(...tri[2]); x.closePath(); x.fill();
+        });
+      }
+      x.fillStyle = 'rgba(255,255,255,.08)'; x.fillRect(0, 0, 256, 1024);
+      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+    })();
+
+    // massas: cada final sobe até o último andar com unidade; terraço verde no topo
+    Object.entries(P).forEach(([f, p]) => {
+      const h = topoF(f) - B;
+      if (!p.ala) {
+        cx(p.w, h, p.d, Number(f) % 2 ? mBranco : mCinza, p.x, B + h / 2, p.z);
+        cx(p.w, h, CORR, mat(0xD9D6D0), p.x, B + h / 2, CORR / 2);                       // corredor (fachada sul)
+      } else {
+        cx(p.w, h, p.d, mBranco, p.x, B + h / 2, p.z);
+        cx(1.6, h, p.d, mat(0xD9D6D0), p.x - p.w / 2 - 0.8, B + h / 2, p.z);               // corredor da ala
+      }
+      if (maxA[f] < 17) cx(p.w + 0.2, 0.7, p.d + 0.2, mVerde, p.x, B + h + 0.35, p.z);
+      else cx(p.w + 0.3, 0.6, p.d + 0.3, mat(0xBDBAB4), p.x, B + h + 0.3, p.z);
+    });
+    // núcleo de elevadores com faixa marrom
+    const hCore = topoF(9) + 3;
+    cx(CORE, hCore - B, D + CORR, mCinza, xc0 + CORE / 2, B + (hCore - B) / 2, -D / 2 + CORR / 2);
+    cx(1.2, hCore - B, 0.4, mMarrom, xc0 + CORE / 2, B + (hCore - B) / 2, -D - 0.2);
+    // faixas verticais marrons e o painel na ponta leste
+    [P[2].x + UW / 2, P[7].x + UW / 2].forEach((x) => cx(0.9, topoF(7) - B, 0.4, mMarrom, x, B + (topoF(7) - B) / 2, -D - 0.2));
+    const p10 = P[10], hM = topoF(10) - B;
+    const mural = new THREE.Mesh(new THREE.PlaneGeometry(p10.d, hM - 2), new THREE.MeshStandardMaterial({ map: texMural, roughness: 0.8 }));
+    mural.position.set(p10.x + p10.w / 2 + 0.05, B + 1 + (hM - 2) / 2, p10.z); mural.rotation.y = Math.PI / 2; g.add(mural);
+
+    // ---- unidades: janelas, varandas, área clicável ----
+    const vidros = [], caixilhos = [], lajes = [], guardas = [];
+    const ROTF = { '-z': Math.PI, '+z': 0, '+x': Math.PI / 2, '-x': -Math.PI / 2 };
+    const W = (x, y, z, w, h, face, reg) => {
+      const n = { '-z': [0, -1], '+z': [0, 1], '+x': [1, 0], '-x': [-1, 0] }[face];
+      caixilhos.push([x + n[0] * 0.04, y, z + n[1] * 0.04, w + 0.14, h + 0.14, face]);
+      vidros.push([x + n[0] * 0.07, y, z + n[1] * 0.07, w, h, face, reg]);
+    };
+    bc.andares.forEach((andar) => {
+      const y0 = yAnd(andar);
+      bc.finais.forEach((final) => {
+        const u = porChave[`${bloco}|${andar}|${final}`]; if (!u) return;
+        const p = P[Number(final)]; if (!p) return;
+        const reg = { bloco, andar, final, u, estado: estado(u), lado: 1, inst: [], grades: [] };
+        if (!p.ala) {
+          const zf = p.z - p.d / 2;
+          W(p.x - 1.2, y0 + 1.1, zf, 1.7, 2.1, '-z', reg); W(p.x + 1.7, y0 + 1.6, zf, 1.1, 1.0, '-z', reg);
+          lajes.push([p.x - 1.2, y0 + 0.08, zf - 0.6, 2.6, 0.16, 1.2]); guardas.push([p.x - 1.2, y0 + 0.65, zf - 1.2, 2.6, '-z', reg]);
+          reg.normLocal = new THREE.Vector3(0, 0, -1);
+          if (Number(final) === 10) W(p.x + p.w / 2, y0 + 1.6, p.z + 2.2, 1.0, 1.0, '+x', reg);
+        } else {
+          const xf = p.x + p.w / 2;
+          W(xf, y0 + 1.1, p.z - 1.0, 1.7, 2.1, '+x', reg); W(xf, y0 + 1.6, p.z + 1.8, 1.0, 1.0, '+x', reg);
+          lajes.push([xf + 0.6, y0 + 0.08, p.z - 1.0, 1.2, 0.16, 2.6]); guardas.push([xf + 1.2, y0 + 0.65, p.z - 1.0, 2.6, '+x', reg]);
+          if (Number(final) === 11 || Number(final) === 13 || Number(final) === 16) W(p.x, y0 + 1.6, p.z + p.d / 2, 1.1, 1.0, '+z', reg);
+          reg.normLocal = new THREE.Vector3(1, 0, 0);
+        }
+        const pk = new THREE.Mesh(new THREE.BoxGeometry(p.w - 0.15, FH - 0.1, p.d - 0.15), new THREE.MeshBasicMaterial({ visible: false }));
+        pk.position.set(p.x, y0 + FH / 2, p.z); g.add(pk); pk.userData.reg = reg; pick.push(pk);
+        reg.pk = pk; reg.grupo = g; reg.normal = reg.normLocal.clone();
+        reg.sob = [[p.x, y0 + FH / 2, p.z, p.w + 0.3, FH - 0.08, p.d + 0.3]];
+        unidades.push(reg);
+      });
+    });
+    const plano = new THREE.PlaneGeometry(1, 1);
+    const posI = (arr, mesh, fn) => arr.forEach((a, i) => { fn(a); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); });
+    const plan = ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROTF[f], 0); dummy.scale.set(w, hh, 1); };
+    const mCaix = new THREE.InstancedMesh(plano, mat(0xEFEFED, { roughness: 0.5 }), caixilhos.length); posI(caixilhos, mCaix, plan); g.add(mCaix);
+    const mVid = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ toneMapped: false }), vidros.length); posI(vidros, mVid, plan);
+    vidros.forEach((v, i) => { v[6].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); }); g.add(mVid);
+    const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0x6B4A36), lajes.length);
+    posI(lajes, mLaje, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); }); mLaje.castShadow = true; g.add(mLaje);
+    const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }), guardas.length);
+    posI(guardas, mGuarda, ([x, y, z, w, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROTF[f], 0); dummy.scale.set(w, 1.1, 1); });
+    guardas.forEach((gd, i) => { gd[5].grades.push(i); mGuarda.setColorAt(i, new THREE.Color(0xffffff)); }); g.add(mGuarda);
+    const sobs = unidades.flatMap((x) => x.sob.map((b) => [b, x]));
+    const mSob = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.72, toneMapped: false, depthWrite: false }), Math.max(1, sobs.length));
+    sobs.forEach(([[x, y, z, w, hh, d], rr], i) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); dummy.updateMatrix(); mSob.setMatrixAt(i, dummy.matrix); mSob.setColorAt(i, new THREE.Color(0xffffff)); rr.sobI = (rr.sobI || []).concat(i); });
+    mSob.visible = false; g.add(mSob);
+    torresInst.push({ bloco, mVid, mGuarda, mSob });
+    unidades.forEach((x) => { x.mVid = mVid; x.mGuarda = mGuarda; x.mSob = mSob; });
+    const r = rotulo('Lumy Art'); r.position.set(P[8].x, topoF(9) + 12, -2); r.scale.set(12, 4.5, 1); g.add(r);
+  }
+
+  // ======================================================================
   // Gran Vic Niágara (VIC Engenharia, Vinhedo): 8 torres baixas, 4 aptos por andar.
   // Posições da implantação do book (página 16); 1 px da imagem (2000 px) ~ 0,087 m.
   // Apto 01 e 03 do lado de cima da implantação, 02 e 04 do lado de baixo.
@@ -1700,7 +1862,7 @@ function iniciar(DATA) {
     if (b === 'todos') { camAlvo = { pos: CAM_INICIAL(), alvo: new THREE.Vector3(...cfg.cam.alvo) }; return; }
     const bc = cfg.blocos[b], bx = bc.x || 0;
     const h = (bc.andares.length + (cfg.modelo === 'brisas' ? 1 : 0)) * FH * ESC / 2;
-    const d = cfg.modelo === 'brisas' ? 30 : cfg.modelo === 'nexus' ? 34 : cfg.modelo === 'valebosque' ? 44 : 20;
+    const d = cfg.modelo === 'brisas' ? 30 : cfg.modelo === 'nexus' ? 34 : cfg.modelo === 'valebosque' ? 44 : cfg.modelo === 'lumy' ? 36 : 20;
     const y0 = bc.y0 || 0;
     camAlvo = { pos: new THREE.Vector3(bx + d * 0.7, y0 + h + 7, bc.z + d + (b === 'A' ? 2 : 0)).add(mobile() ? new THREE.Vector3(6, 4, 10) : new THREE.Vector3()), alvo: new THREE.Vector3(bx, y0 + h, bc.z) };
   }
@@ -1709,7 +1871,7 @@ function iniciar(DATA) {
     const bc = cfg.blocos[r.bloco];
     const p = r.centro.clone();
     const lado = r.lado;
-    const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : cfg.modelo === 'villagio' ? 1.5 : cfg.modelo === 'valebosque' ? 2.1 : 1);
+    const dist = (mobile() ? 30 : 19) * (cfg.modelo === 'brisas' ? 1.35 : cfg.modelo === 'villagio' ? 1.5 : cfg.modelo === 'valebosque' ? 2.1 : cfg.modelo === 'lumy' ? 1.8 : 1);
     if (r.normal) { camAlvo = { pos: p.clone().add(r.normal.clone().multiplyScalar(dist)).add(new THREE.Vector3(0, cfg.modelo === 'villagio' ? 12 : 3, 0)), alvo: p.clone() }; return; }
     camAlvo = { pos: new THREE.Vector3(p.x * 0.6 + 6, Math.max(p.y + 3, 4), p.z + lado * dist), alvo: p.clone() };
   }
