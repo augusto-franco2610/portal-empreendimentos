@@ -229,7 +229,7 @@ const CONFIG = {
   'lumy-art-jundiai': {
     // Tabela da Lumy de 24/11/2026: 176 apartamentos do 3º ao 17º andar, finais 01 a 16 (térreo e 2º: embasamento e loja).
     modelo: 'lumy', rotBloco: 'Torre', varanda: 'Varanda', soTabela: true,
-    cam: { pos: [44, 34, -46], mob: [56, 46, -62], alvo: [2, 14, 0], max: 240 },
+    cam: { pos: [60, 30, -24], mob: [76, 42, -34], alvo: [4, 13, 2], max: 240 },
     numUn: (a, f) => a + String(f).padStart(2, '0'),
     blocos: { '1': { x: 0, z: 0, andares: Array.from({ length: 15 }, (_, i) => String(i + 3)), finais: Array.from({ length: 16 }, (_, i) => String(i + 1)) } },
     plantas: [
@@ -1266,7 +1266,7 @@ function iniciar(DATA) {
 
   // ======================================================================
   // Lumy Art Jundiaí (Lumy / IGN): torre única, apartamentos do 3º ao 17º andar (16 finais).
-  // Volume pelo pavimento tipo e pelos renders do book: barra comprida com os finais de frente
+  // Volume pelo pavimento tipo e pelos renders do book (capa e fachadas; book reenviado em 25/11): barra comprida com os finais de frente
   // para o bosque (norte), núcleo de elevadores, 3 alas para o sul, torre escalonada (cada coluna
   // sobe até o último andar que tem unidade na tabela, com terraços verdes), embasamento de
   // madeira com plantas, loja de vidro na esquina e o painel artístico na ponta voltada para a
@@ -1308,7 +1308,7 @@ function iniciar(DATA) {
     emp.unidades.forEach((u) => { const f = Number(u.final); maxA[f] = Math.max(maxA[f] || 0, Number(u.andar)); });
     const topoF = (f) => yAnd(maxA[f] || 3) + FH;
     const tl = texLajes(15);
-    const mBranco = mat(0xE6E4E0, { map: tl }), mCinza = mat(0xA6A6A8, { map: tl }), mMarrom = mat(0x5A3A2A), mVerde = mat(0x3E6B32, { roughness: 0.9 });
+    const mBranco = mat(0xEDECEA, { map: tl }), mCinza = mat(0xB4B4B6, { map: tl }), mMarrom = mat(0x5A3A2A), mVerde = mat(0x3E6B32, { roughness: 0.9 });
     // embasamento de madeira com faixas de plantas e a loja de vidro na esquina
     const texMad = (() => {
       const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d');
@@ -1346,7 +1346,10 @@ function iniciar(DATA) {
         cx(p.w, h, p.d, mBranco, p.x, B + h / 2, p.z);
         cx(1.6, h, p.d, mat(0xD9D6D0), p.x - p.w / 2 - 0.8, B + h / 2, p.z);               // corredor da ala
       }
-      if (maxA[f] < 17) cx(p.w + 0.2, 0.7, p.d + 0.2, mVerde, p.x, B + h + 0.35, p.z);
+      if (maxA[f] < 17) {
+        cx(p.w + 0.2, 0.7, p.d + 0.2, mVerde, p.x, B + h + 0.35, p.z);
+        for (let k = 0; k < 4; k++) cx(0.7, 1.2 + Math.random() * 1.4, 0.5, mVerde, p.x - p.w / 2 + 0.8 + k * (p.w - 1.6) / 3, B + h - 0.4, p.ala ? p.z + p.d / 2 + 0.2 : p.z - p.d / 2 - 0.2);
+      }
       else cx(p.w + 0.3, 0.6, p.d + 0.3, mat(0xBDBAB4), p.x, B + h + 0.3, p.z);
     });
     // núcleo de elevadores com faixa marrom
@@ -1355,12 +1358,27 @@ function iniciar(DATA) {
     cx(1.2, hCore - B, 0.4, mMarrom, xc0 + CORE / 2, B + (hCore - B) / 2, -D - 0.2);
     // faixas verticais marrons e o painel na ponta leste
     [P[2].x + UW / 2, P[7].x + UW / 2].forEach((x) => cx(0.9, topoF(7) - B, 0.4, mMarrom, x, B + (topoF(7) - B) / 2, -D - 0.2));
+    // ponta leste (renders do book): fim da barra branco com faixas marrons horizontais, torre de escada
+    // com o painel voltado para a avenida, coroada de plantas, e um volume marrom alto ao lado
     const p10 = P[10], hM = topoF(10) - B;
-    const mural = new THREE.Mesh(new THREE.PlaneGeometry(p10.d, hM - 2), new THREE.MeshStandardMaterial({ map: texMural, roughness: 0.8 }));
-    mural.position.set(p10.x + p10.w / 2 + 0.05, B + 1 + (hM - 2) / 2, p10.z); mural.rotation.y = Math.PI / 2; g.add(mural);
+    const texFaixas = (() => {
+      const c = document.createElement('canvas'); c.width = 128; c.height = 512; const x = c.getContext('2d');
+      x.fillStyle = '#E8E6E2'; x.fillRect(0, 0, 128, 512);
+      for (let k = 0; k < 16; k++) { const y = 18 + k * 31, w = k % 2 ? 92 : 112, x0 = k % 3 === 0 ? 0 : 16; x.fillStyle = '#4A2F22'; x.fillRect(x0, y, w, 9); x.fillStyle = '#A0703F'; x.fillRect(x0, y + 9, w, 3); }
+      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+    })();
+    const ponta = new THREE.Mesh(new THREE.PlaneGeometry(p10.d, hM), new THREE.MeshStandardMaterial({ map: texFaixas, roughness: 0.75 }));
+    ponta.position.set(p10.x + p10.w / 2 + 0.03, B + hM / 2, p10.z); ponta.rotation.y = Math.PI / 2; g.add(ponta);
+    const xe = p10.x - 0.5, ze = CORR + 4.2, he = hM + 4;
+    cx(7, he, 8.4, mCinza, xe, B + he / 2, ze);
+    const mural = new THREE.Mesh(new THREE.PlaneGeometry(8.4, he - 1.5), new THREE.MeshStandardMaterial({ map: texMural, roughness: 0.8 }));
+    mural.position.set(xe + 3.55, B + 1.5 + (he - 1.5) / 2, ze); mural.rotation.y = Math.PI / 2; g.add(mural);
+    cx(7.4, 1.1, 8.8, mVerde, xe, B + he + 0.55, ze);
+    for (let k = 0; k < 7; k++) cx(0.5, 1.6 + Math.random() * 1.6, 0.6, mVerde, xe + 3.4, B + he - 1 - Math.random(), ze - 3.8 + k * 1.25);
+    cx(4.2, he - 2, 5, mat(0x4A2F22, { roughness: 0.8 }), xe - 0.5, B + (he - 2) / 2, ze + 6.7);
 
     // ---- unidades: janelas, varandas, área clicável ----
-    const vidros = [], caixilhos = [], lajes = [], guardas = [];
+    const vidros = [], caixilhos = [], lajes = [], guardas = [], nichos = [];
     const ROTF = { '-z': Math.PI, '+z': 0, '+x': Math.PI / 2, '-x': -Math.PI / 2 };
     const W = (x, y, z, w, h, face, reg) => {
       const n = { '-z': [0, -1], '+z': [0, 1], '+x': [1, 0], '-x': [-1, 0] }[face];
@@ -1375,12 +1393,14 @@ function iniciar(DATA) {
         const reg = { bloco, andar, final, u, estado: estado(u), lado: 1, inst: [], grades: [] };
         if (!p.ala) {
           const zf = p.z - p.d / 2;
+          nichos.push([p.x - 1.2, y0 + FH / 2, zf - 0.02, 3.0, FH - 0.25, '-z']);
           W(p.x - 1.2, y0 + 1.1, zf, 1.7, 2.1, '-z', reg); W(p.x + 1.7, y0 + 1.6, zf, 1.1, 1.0, '-z', reg);
           lajes.push([p.x - 1.2, y0 + 0.08, zf - 0.6, 2.6, 0.16, 1.2]); guardas.push([p.x - 1.2, y0 + 0.65, zf - 1.2, 2.6, '-z', reg]);
           reg.normLocal = new THREE.Vector3(0, 0, -1);
           if (Number(final) === 10) W(p.x + p.w / 2, y0 + 1.6, p.z + 2.2, 1.0, 1.0, '+x', reg);
         } else {
           const xf = p.x + p.w / 2;
+          nichos.push([xf + 0.02, y0 + FH / 2, p.z - 1.0, 3.0, FH - 0.25, '+x']);
           W(xf, y0 + 1.1, p.z - 1.0, 1.7, 2.1, '+x', reg); W(xf, y0 + 1.6, p.z + 1.8, 1.0, 1.0, '+x', reg);
           lajes.push([xf + 0.6, y0 + 0.08, p.z - 1.0, 1.2, 0.16, 2.6]); guardas.push([xf + 1.2, y0 + 0.65, p.z - 1.0, 2.6, '+x', reg]);
           if (Number(final) === 11 || Number(final) === 13 || Number(final) === 16) W(p.x, y0 + 1.6, p.z + p.d / 2, 1.1, 1.0, '+z', reg);
@@ -1396,10 +1416,11 @@ function iniciar(DATA) {
     const plano = new THREE.PlaneGeometry(1, 1);
     const posI = (arr, mesh, fn) => arr.forEach((a, i) => { fn(a); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); });
     const plan = ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROTF[f], 0); dummy.scale.set(w, hh, 1); };
-    const mCaix = new THREE.InstancedMesh(plano, mat(0xEFEFED, { roughness: 0.5 }), caixilhos.length); posI(caixilhos, mCaix, plan); g.add(mCaix);
+    const mNicho = new THREE.InstancedMesh(plano, mat(0x3B2A22, { roughness: 0.8 }), nichos.length); posI(nichos, mNicho, plan); g.add(mNicho);
+    const mCaix = new THREE.InstancedMesh(plano, mat(0x2E2A28, { roughness: 0.5 }), caixilhos.length); posI(caixilhos, mCaix, plan); g.add(mCaix);
     const mVid = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ toneMapped: false }), vidros.length); posI(vidros, mVid, plan);
     vidros.forEach((v, i) => { v[6].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); }); g.add(mVid);
-    const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0x6B4A36), lajes.length);
+    const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0xA0703F), lajes.length);
     posI(lajes, mLaje, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); }); mLaje.castShadow = true; g.add(mLaje);
     const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }), guardas.length);
     posI(guardas, mGuarda, ([x, y, z, w, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROTF[f], 0); dummy.scale.set(w, 1.1, 1); });
