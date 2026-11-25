@@ -965,17 +965,15 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 
 /* ===== Transições líquidas (vidro que escorre) — pedido do Franco em 25/11/2026 ===== */
 :root { --mola: cubic-bezier(.34, 1.45, .5, 1); --liquido: cubic-bezier(.22, 1, .36, 1); }
-/* troca de tela: a nova página se espalha como uma gota a partir do toque; a antiga derrete */
-main#view { view-transition-name: tela; }
-::view-transition-old(root), ::view-transition-new(root) { animation: none; }
-::view-transition-group(tela) { animation-duration: .75s; animation-timing-function: var(--liquido); }
-::view-transition-old(tela) { animation: .55s var(--liquido) both derreter; }
-::view-transition-new(tela) { animation: .8s var(--liquido) both espalhar; }
-@keyframes derreter { to { opacity: 0; transform: scale(.965) translateY(10px); filter: blur(18px) saturate(1.4); } }
+/* troca de tela: a antiga derrete e a nova se espalha como uma gota a partir do toque (sem depender de View Transitions) */
+#view.liq-sai { animation: derreter .26s var(--liquido) both; pointer-events: none; }
+#view.liq-entra { animation: espalhar .85s var(--liquido) both; }
+@keyframes derreter { to { opacity: 0; transform: scale(.97) translateY(12px); filter: blur(20px) saturate(1.5); } }
 @keyframes espalhar {
-  0% { clip-path: circle(0 at var(--tx, 50%) var(--ty, 30%)); filter: blur(18px) saturate(1.7) brightness(1.15); transform: scale(1.015); }
-  55% { filter: blur(5px) saturate(1.25); }
-  100% { clip-path: circle(150vmax at var(--tx, 50%) var(--ty, 30%)); filter: none; transform: none; }
+  0% { -webkit-clip-path: circle(0 at var(--tx, 50%) var(--ty, 140px)); clip-path: circle(0 at var(--tx, 50%) var(--ty, 140px)); filter: blur(20px) saturate(1.7) brightness(1.15); transform: scale(1.02); opacity: .4; }
+  50% { filter: blur(6px) saturate(1.25); opacity: 1; }
+  99% { -webkit-clip-path: circle(170vmax at var(--tx, 50%) var(--ty, 140px)); clip-path: circle(170vmax at var(--tx, 50%) var(--ty, 140px)); }
+  100% { -webkit-clip-path: none; clip-path: none; filter: none; transform: none; opacity: 1; }
 }
 /* gota que escorre até o item ativo do menu */
 .nav { position: relative; }
@@ -2166,7 +2164,27 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
     return '/';
   }
   let rotaAtual = rotaInicial();
-  const transicao = (fn) => { if (document.startViewTransition && !(window.FX && FX.reduzido)) { try { return document.startViewTransition(fn); } catch { /* segue sem transição */ } } return fn(); };
+  // Transição líquida própria (funciona em qualquer navegador, inclusive iPhone e app):
+  // a tela atual derrete (desfoque) e a nova se espalha como uma gota a partir do último toque.
+  let ultimoToque = null, trocando = null;
+  const transicao = async (fn) => {
+    const v = document.getElementById('view');
+    if (!v || (window.FX && FX.reduzido)) return fn();
+    if (trocando) clearTimeout(trocando);
+    v.classList.remove('liq-entra'); void v.offsetWidth; v.classList.add('liq-sai');
+    await new Promise((ok) => setTimeout(ok, 240));
+    try { await fn(); } finally {
+      const v2 = document.getElementById('view');
+      if (v2) {
+        const r = v2.getBoundingClientRect();
+        const x = ultimoToque ? ultimoToque[0] - r.left : r.width / 2, y = ultimoToque ? Math.min(Math.max(ultimoToque[1], 0), innerHeight) - r.top : 140;
+        v2.style.setProperty('--tx', Math.round(x) + 'px'); v2.style.setProperty('--ty', Math.round(y) + 'px');
+        v2.classList.remove('liq-sai'); void v2.offsetWidth; v2.classList.add('liq-entra');
+        trocando = setTimeout(() => v2.classList.remove('liq-entra'), 950);
+      }
+      ultimoToque = null;
+    }
+  };
   const ir = (h) => { rotaAtual = String(h).replace(/^#/, ''); transicao(() => rotear()); };
   // Espelho 3D embutido: no celular o iframe cresce até a altura do conteúdo e pede rolagem até a ficha
   addEventListener('message', (ev) => {
@@ -2223,12 +2241,7 @@ window.rotUn = (torre, numero, sep = ', unidade ') => (String(torre) === 'Casas'
   }
   addEventListener('resize', () => moverGotas());
   // ponto do toque: a nova tela se espalha a partir dele; brilho do vidro segue o dedo/mouse
-  addEventListener('pointerdown', (ev) => {
-    const v = document.getElementById('view'); if (!v) return;
-    const r = v.getBoundingClientRect(), vh = innerHeight;
-    document.documentElement.style.setProperty('--tx', Math.round(ev.clientX - r.left) + 'px');
-    document.documentElement.style.setProperty('--ty', Math.round(Math.min(Math.max(ev.clientY, 0), vh) - Math.max(r.top, 0)) + 'px');
-  }, { passive: true, capture: true });
+  addEventListener('pointerdown', (ev) => { ultimoToque = [ev.clientX, ev.clientY]; }, { passive: true, capture: true });
   const VIDROS = '.painel, .card, .kpi, .mat, .boasvindas, .mapa-info, .resumo, .vazio, .doc, .cond-box, .filtros';
   addEventListener('pointermove', (ev) => {
     const el = ev.target.closest && ev.target.closest(VIDROS); if (!el) return;
