@@ -1154,10 +1154,16 @@ function iniciar(DATA) {
     [-75, 75].forEach((x) => cx(0.8, -NIV, 40, mat(0x6B5A48), x, NIV / 2, -7, true)); // taludes laterais
     const encosta = caixa(150, 0.4, Math.hypot(12, -NIV), grama, 0, NIV / 2, -33, true, sg); encosta.rotation.x = Math.atan2(-NIV, 12);
     void asf; void faixa;
-    cx(260, 0.1, 10, mat(0x2F3034), 0, 0.06, 32, false);                             // Estrada Velha da Boiada
-    for (let i = 0; i < 46; i++) cx(4.5, 0.04, 0.3, mat(0xEDEDED), -125 + i * 12, 0.13, 32, false);
-    cx(260, 0.3, 2.4, calc, 0, 0.15, 26.6, false);
-    const pl = placa('☰ ESTRADA', 'Velha da Boiada · frente', '#FFD27A'); pl.position.set(-30, 5.5, 15); pl.scale.set(11, 3.4, 1);
+    // Estrada Velha da Boiada em curva, pela implantação 897-22 FL09 R02: o alinhamento do lote desce da esquerda (E1)
+    // para a direita (D, C1), então a estrada fica mais perto da B2 do que da B1
+    const EIXO = [[-140, 41], [-58.5, 39.7], [-30.5, 38.7], [3.4, 36.4], [39.8, 31.8], [60.4, 27.9], [140, 13]];
+    for (let k = 0; k < EIXO.length - 1; k++) {
+      const [x0, z0] = EIXO[k], [x1, z1] = EIXO[k + 1], L = Math.hypot(x1 - x0, z1 - z0), ang = -Math.atan2(z1 - z0, x1 - x0);
+      cx(L + 0.6, 0.1, 10, mat(0x2F3034), (x0 + x1) / 2, 0.06, (z0 + z1) / 2, false, ang);
+      cx(L + 0.6, 0.3, 2.2, calc, (x0 + x1) / 2 - Math.sin(-ang) * 0, 0.15, (z0 + z1) / 2 - 6.1, false, ang);       // calçada do lado do condomínio
+      for (let t = 6; t < L; t += 12) cx(4.5, 0.04, 0.3, mat(0xEDEDED), x0 + (x1 - x0) * t / L, 0.13, z0 + (z1 - z0) * t / L, false, ang);
+    }
+    const pl = placa('☰ ESTRADA', 'Velha da Boiada · frente', '#FFD27A'); pl.position.set(-30, 5.5, 18); pl.scale.set(11, 3.4, 1);
     // frente pela implantação 897-22 FL09 R02 e pela maquete do stand (vídeo de 26/11/2026): dois edifícios-garagem
     // baixos de concreto cinza ao longo da estrada (cobertura com vagas e guarda-corpo escuro), praça circular com
     // arquibancada entre as torres, estacionamento de visitantes nas pontas e portaria com totem marrom e marquise branca
@@ -1175,7 +1181,7 @@ function iniciar(DATA) {
     };
     garagem(-26.6, 10.3, 13.1, 24.4); garagem(17.2, 37.8, 13.1, 24.4);
     // estacionamento de visitantes nas pontas, no nível da rua
-    [[-58.5, -27], [37.8, 57.5]].forEach(([x0, x1]) => { cx(x1 - x0, 0.14, 6.4, mat(0x6E6F72), (x0 + x1) / 2, 0.08, 21, false); for (let x = x0 + 1.2; x < x1; x += 2.5) cx(0.1, 0.03, 4.8, mat(0xF2F2F2), x, 0.17, 21.6, false); });
+    [[-58.5, -38, 25.5], [39, 57, 15.5], [39, 57, 22]].forEach(([x0, x1, z]) => { cx(x1 - x0, 0.14, 6.4, mat(0x6E6F72), (x0 + x1) / 2, 0.08, z, false); for (let x = x0 + 1.2; x < x1; x += 2.5) cx(0.1, 0.03, 4.8, mat(0xF2F2F2), x, 0.17, z + 0.6, false); });
     // portaria (maquete: totem marrom escuro com o nome, marquise branca e portão), no acesso "E" da implantação
     const texNome = (() => {
       const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
@@ -1185,10 +1191,10 @@ function iniciar(DATA) {
       const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
     })();
     const totem = new THREE.Mesh(new THREE.BoxGeometry(6.5, 6.5, 1.4), [mat(0x4A3A30), mat(0x4A3A30), mat(0x4A3A30), mat(0x4A3A30), new THREE.MeshStandardMaterial({ map: texNome, roughness: 0.8 }), mat(0x4A3A30)]);
-    totem.position.set(-31.5, 3.25, 24.6); totem.castShadow = true; sg.add(totem);
-    cx(8, 0.45, 5, mat(0xF2F0EC), -25.5, 4.2, 24.2);                                   // marquise
-    cx(3.2, 3.4, 3, mat(0x8A5A38), -24, 1.7, 23.6);                                     // guarita revestida de madeira
-    for (let k = 0; k < 9; k++) cx(0.12, 2.2, 0.12, mat(0x2A2B2D), -29 + k * 0.6, 1.1, 25.6);   // portão
+    totem.position.set(-36.5, 3.25, 31); totem.castShadow = true; sg.add(totem);
+    cx(8, 0.45, 5, mat(0xF2F0EC), -30.5, 4.2, 30.4);                                   // marquise
+    cx(3.2, 3.4, 3, mat(0x8A5A38), -28.8, 1.7, 29.8);                                     // guarita revestida de madeira
+    for (let k = 0; k < 9; k++) cx(0.12, 2.2, 0.12, mat(0x2A2B2D), -34.5 + k * 0.6, 1.1, 32);   // portão
     // ---- detalhes da maquete do stand (vídeo de 26/11/2026) ----
     // rampa circular (cilindro branco com faixas em espiral) entre as garagens, cobertura com vagas no nível da rua,
     // e arquibancada em semicírculo descendo para o platô das torres
