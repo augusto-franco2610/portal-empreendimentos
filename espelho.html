@@ -1174,9 +1174,6 @@ function iniciar(DATA) {
       cx(w, 0.5, 0.9, mat(0x5E8F45), xc, h + 0.3, z1 - 0.6);                                          // jardineira
     };
     garagem(-26.6, 10.3, 13.1, 24.4); garagem(17.2, 37.8, 13.1, 24.4);
-    // praça circular com arquibancada voltada para as torres
-    const praca = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 1.2, 48), mat(0xD9D7D2)); praca.position.set(1.4, NIV + 0.6, 6); praca.castShadow = praca.receiveShadow = true; sg.add(praca);
-    [8.4, 9.3, 10.2].forEach((r, k) => { const d = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.9 - k * 0.28, 48, 1, false, Math.PI * 0.5, Math.PI), mat(0xE6E4DF)); d.position.set(1.4, NIV + (0.9 - k * 0.28) / 2, 6); d.receiveShadow = true; sg.add(d); });
     // estacionamento de visitantes nas pontas, no nível da rua
     [[-58.5, -27], [37.8, 57.5]].forEach(([x0, x1]) => { cx(x1 - x0, 0.14, 6.4, mat(0x6E6F72), (x0 + x1) / 2, 0.08, 21, false); for (let x = x0 + 1.2; x < x1; x += 2.5) cx(0.1, 0.03, 4.8, mat(0xF2F2F2), x, 0.17, 21.6, false); });
     // portaria (maquete: totem marrom escuro com o nome, marquise branca e portão), no acesso "E" da implantação
@@ -1192,10 +1189,48 @@ function iniciar(DATA) {
     cx(8, 0.45, 5, mat(0xF2F0EC), -25.5, 4.2, 24.2);                                   // marquise
     cx(3.2, 3.4, 3, mat(0x8A5A38), -24, 1.7, 23.6);                                     // guarita revestida de madeira
     for (let k = 0; k < 9; k++) cx(0.12, 2.2, 0.12, mat(0x2A2B2D), -29 + k * 0.6, 1.1, 25.6);   // portão
-    // lazer entre as torres e a mata (piscinas, quadra)
+    // ---- detalhes da maquete do stand (vídeo de 26/11/2026) ----
+    // rampa circular (cilindro branco com faixas em espiral) entre as garagens, cobertura com vagas no nível da rua,
+    // e arquibancada em semicírculo descendo para o platô das torres
+    const mBranco = mat(0xEFEEEA), mFaixa = mat(0x9E9C97);
+    const rampa = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, -NIV, 48), mBranco); rampa.position.set(1.4, NIV / 2, 6); rampa.castShadow = rampa.receiveShadow = true; sg.add(rampa);
+    for (let k = 0; k < 4; k++) { const anel = new THREE.Mesh(new THREE.CylinderGeometry(7.56, 7.56, 0.35, 48, 1, true), mFaixa); anel.position.set(1.4, NIV + 1 + k * 1.3, 6); anel.rotation.z = 0.05; sg.add(anel); }
+    const tampa = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.12, 48), mat(0x9C9B97)); tampa.position.set(1.4, 0.06, 6); sg.add(tampa);
+    const parap = new THREE.Mesh(new THREE.CylinderGeometry(7.6, 7.6, 1.0, 48, 1, true), mBranco); parap.position.set(1.4, 0.5, 6); sg.add(parap);
+    [8.6, 9.8, 11, 12.2].forEach((r, k) => { const h = (4 - k) * 0.9; const d = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 48, 1, false, Math.PI * 0.5, Math.PI), mat(k % 2 ? 0xE6E4DF : 0xD6D3CC)); d.position.set(1.4, NIV + h / 2, 6); d.receiveShadow = true; sg.add(d); });
+    // árvore com copa colorida (maquete: copas verdes, brancas floridas, amarelas e avermelhadas), em metros e na altura certa
+    const copas = [0x4F8A3C, 0x3F7A34, 0x6FA34A, 0xE8E4DA, 0xD9C94A, 0xB5553A, 0x8DBF5A];
+    const arv = (x, z, y = NIV, s = 1) => {
+      cx(0.35 * s, 2.6 * s, 0.35 * s, mat(0x5A4330), x, y + 1.3 * s, z);
+      const c = new THREE.Mesh(new THREE.IcosahedronGeometry(2.1 * s, 1), mat(copas[Math.floor(rnd() * copas.length)], { roughness: 0.9 }));
+      c.position.set(x, y + 3.6 * s, z); c.scale.y = 0.85; c.castShadow = true; sg.add(c);
+    };
+    const palma = (x, z, y = NIV) => {
+      cx(0.3, 6, 0.3, mat(0x8A6A48), x, y + 3, z);
+      for (let k = 0; k < 7; k++) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.5, 3.4, 4), mat(0x3F8A3A)); f.position.set(x + Math.cos(k / 7 * 6.28) * 1.2, y + 5.8, z + Math.sin(k / 7 * 6.28) * 1.2); f.rotation.z = Math.cos(k / 7 * 6.28) * 1.2; f.rotation.x = -Math.sin(k / 7 * 6.28) * 1.2; sg.add(f); }
+    };
+    // lazer (maquete): deck da piscina com palmeiras e espreguiçadeiras, quadra de areia, quadra poliesportiva e pergolado
     const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08 });
-    cx(16, 0.2, 9, mat(0xE2DCCD), 58, NIV + 0.12, -12, false); cx(11, 0.25, 5, agua, 56.5, NIV + 0.14, -12, false); cx(3.2, 0.25, 3.2, agua, 63, NIV + 0.14, -12, false);
-    cx(9, 0.2, 13, mat(0xC77A4A), 60, NIV + 0.12, 6, false);
+    cx(22, 0.3, 14, mat(0xE2D8C4), 59, NIV + 0.15, -14, false);                                     // deck
+    cx(13, 0.35, 6, agua, 57, NIV + 0.2, -15, false); cx(4, 0.35, 4, agua, 66, NIV + 0.2, -15, false);
+    for (let k = 0; k < 6; k++) cx(0.9, 0.35, 2.1, mat(0x2E2E30), 51 + k * 2.2, NIV + 0.45, -9.5);    // espreguiçadeiras
+    [[49.5, -19], [53, -8.5], [63, -8.5], [68, -19], [61, -20]].forEach(([x, z]) => palma(x, z));
+    cx(0.4, 1.2, 14, mat(0x2A2A2C), 48, NIV + 0.6, -14);                                             // guarda-corpo do deck
+    cx(9, 0.2, 16, mat(0xDCC79A), 58, NIV + 0.12, 4, false);                                         // quadra de areia
+    cx(9.2, 1.4, 0.06, mat(0xF2F2F2), 58, NIV + 1.3, 4);
+    cx(16, 0.22, 10, mat(0x6B5A8A), -60, NIV + 0.13, -14, false);                                    // quadra poliesportiva junto à B1
+    for (const [w, d, x, z] of [[16, 0.15, -60, -18.9], [16, 0.15, -60, -9.1], [0.15, 10, -67.9, -14], [0.15, 10, -52.1, -14], [0.15, 10, -60, -14]]) cx(w, 0.03, d, mat(0xF2C94C), x, NIV + 0.26, z, false);
+    const perg = (x, z) => { for (const [a, b] of [[-2, -2], [2, -2], [-2, 2], [2, 2]]) cx(0.25, 2.6, 0.25, mat(0x7A5136), x + a, NIV + 1.3, z + b); for (let k = -2; k <= 2; k += 0.5) cx(4.6, 0.16, 0.18, mat(0x8A5E3C), x, NIV + 2.7, z + k); };
+    perg(-50, -2); perg(66, 8);
+    // caminhos e jardineiras escalonadas em volta das torres, escada e rampa em zigue-zague da rua até o platô
+    cx(150, 0.16, 2.2, mat(0xD9D5CC), 0, NIV + 0.08, 11.2, false);                                   // calçada ao pé do arrimo
+    [[2, 0.8], [3.5, 1.6]].forEach(([dz, h]) => cx(150, h, 1.3, mat(0xEAE8E3), 0, NIV + h / 2, 12.9 - dz - 1.2, true));
+    for (let k = 0; k < 3; k++) { const r = caixa(1.8, 0.25, 7.2, mat(0xD9D5CC), 0, 0, 0, true, sg); r.position.set(13.7 + (k % 2 ? 1.6 : -1.6), NIV + (k + 0.5) * (-NIV / 3), 9.2); r.rotation.x = (k % 2 ? 1 : -1) * 0.28; }
+    for (let k = 0; k < 12; k++) cx(3, 0.5 * (k + 1), 0.45, mat(0xDAD7D0), -27.5, NIV + 0.25 * (k + 1), 12.4 - k * 0.45);   // escada junto à portaria
+    // gramado do platô com árvores coloridas, fora das torres, quadras e deck
+    const livre = (x, z) => !(Math.hypot(x + 31, z - 5) < 23 || Math.hypot(x - 27, z + 6) < 23 || (x > 45 && z > -24 && z < 14) || (x < -48 && z > -22 && z < 2) || Math.hypot(x - 1.4, z - 6) < 13 || z > 9.5);
+    for (let i = 0, n = 0; i < 400 && n < 45; i++) { const x = -72 + rnd() * 144, z = -26 + rnd() * 34; if (!livre(x, z)) continue; arv(x, z, NIV, 0.55 + rnd() * 0.35); n++; }
+    for (let i = 0; i < 40; i++) { const x = -72 + rnd() * 144, z = -38 + rnd() * 10; arv(x, z, NIV + Math.max(0, (-28 - z) / 12) * -NIV, 0.8 + rnd() * 0.5); }
     // mata preservada ao fundo, árvores do paisagismo e casas do Castanho do outro lado da estrada
     const nArv = scene.children.length;
     for (let i = 0; i < 120; i++) { const x = -70 + rnd() * 140, z = -16 - rnd() * 38; arvore(x, z, 1.2 + rnd() * 0.9); }
@@ -1233,7 +1268,7 @@ function iniciar(DATA) {
         vol(-L / 2 - 0.4, L / 2 + 0.4, -D / 2 - 0.5, D / 2 + 0.5, mat(0x8F8C86), 0, B);    // embasamento
         vol(-L / 2, L / 2, -D / 2, D / 2, mBege);
         vol(-L / 2 - 0.25, L / 2 + 0.25, -D / 2 - 0.25, D / 2 + 0.25, mCoroa, H, H + 0.9);  // platibanda
-        const vidros = [], caixilhos = [], lajes = [], guardas = [], paineis = [], quadros = [];
+        const vidros = [], caixilhos = [], lajes = [], guardas = [], paineis = [], quadros = [], corrimaos = [];
         const W = (x, y, z, w, h, face, reg) => { const n = face === '+z' ? 1 : -1; caixilhos.push([x, y, z + n * 0.04, w + 0.14, h + 0.14, face]); vidros.push([x, y, z + n * 0.07, w, h, face, reg]); };
         [['frente', 1], ['fundos', -1]].forEach(([lado, s]) => {
           A[lado].forEach((final, i) => {
@@ -1246,6 +1281,8 @@ function iniciar(DATA) {
             const fx = A.ponta > 0 ? '+x' : '-x', xe = A.ponta * L / 2, zc = s * (COR / 2 + UD / 2);
             const WX = (z, y, w, h, reg) => { caixilhos.push([xe + A.ponta * 0.04, y, z, w + 0.14, h + 0.14, fx]); vidros.push([xe + A.ponta * 0.07, y, z, w, h, fx, reg]); };
             if (naPonta) quadros.push([xe + A.ponta * 0.03, H / 2 + B / 2, zc - s * 0.6, 2.3, H - B - 0.6, fx]);
+            // pilastras claras entre os apartamentos (ritmo vertical da maquete)
+            caixa(0.55, H - B, 0.35, mat(0xF1F0EC), xc + (s > 0 ? UW / 2 : -UW / 2), B + (H - B) / 2, zf + s * 0.12, true, wg);
             bc.andares.forEach((andar, k) => {
               const u = porChave[`${bloco}|${andar}|${final}`]; if (!u) return;
               const y0 = B + k * FH;
@@ -1255,7 +1292,9 @@ function iniciar(DATA) {
               paineis.push([xc + UW * 0.26 + 1.05, y0 + 1.6, zf + s * 0.05, 0.9, 1.0, fz]);        // painel marrom ao lado
               lajes.push([xc - UW * 0.18, y0 + 0.08, zf + s * VZ / 2, UW * 0.42, 0.16, VZ]);
               guardas.push([xc - UW * 0.18, y0 + 0.65, zf + s * VZ, UW * 0.42, fz, reg]);
+              corrimaos.push([xc - UW * 0.18, y0 + 1.2, zf + s * VZ, UW * 0.42, 0.09, 0.12], [xc - UW * 0.18, y0 + 0.35, zf + s * VZ, UW * 0.42, 0.06, 0.1]);
               if (naPonta) {
+                corrimaos.push([xe + A.ponta * VZ, y0 + 1.2, zc - s * 0.6, 0.12, 0.09, 2.3], [xe + A.ponta * VZ, y0 + 0.35, zc - s * 0.6, 0.1, 0.06, 2.3]);
                 WX(zc - s * 0.6, y0 + 1.1, 1.6, 2.1, reg);                                           // porta da varanda lateral
                 WX(zc + s * 1.9, y0 + 1.6, 1.0, 1.0, reg);                                           // janela lateral
                 paineis.push([xe + A.ponta * 0.05, y0 + 1.6, zc + s * 2.95, 0.9, 1.0, fx]);
@@ -1282,6 +1321,8 @@ function iniciar(DATA) {
         vidros.forEach((v, i) => { v[6].inst.push(i); mVid.setColorAt(i, new THREE.Color(0x222222)); }); wg.add(mVid);
         const mLaje = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0xEFEEEA), lajes.length);
         posI(lajes, mLaje, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); }); mLaje.castShadow = true; wg.add(mLaje);
+        const mCorr = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0x2B2826, { roughness: 0.6 }), corrimaos.length);
+        posI(corrimaos, mCorr, ([x, y, z, w, hh, d]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, hh, d); }); wg.add(mCorr);
         const mGuarda = new THREE.InstancedMesh(plano, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }), guardas.length);
         posI(guardas, mGuarda, ([x, y, z, w, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, 1.1, 1); });
         guardas.forEach((gd, i) => { gd[5].grades.push(i); mGuarda.setColorAt(i, new THREE.Color(0xffffff)); }); wg.add(mGuarda);
