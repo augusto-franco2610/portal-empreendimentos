@@ -1198,8 +1198,8 @@ function iniciar(DATA) {
 
     // ---- torres: alas (metros; ângulo em graus medido na implantação) ----
     const TORRES = {
-      B1: { nucleo: [-31.4, 8.2, 15], alas: [{ x: -43.2, z: 6.9, ang: 6, len: 22, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: -17.8, z: -2.0, ang: 24, len: 26, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] },
-      B2: { nucleo: [27.0, -4.6, 18], alas: [{ x: 16.2, z: -1.65, ang: 29, len: 24, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: 40.3, z: -11.9, ang: 8, len: 24, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] }
+      B1: { nucleo: [-31.4, 8.2, 15], alas: [{ x: -43.2, z: 6.9, ang: 6, len: 22, ponta: -1, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: -17.8, z: -2.0, ang: 24, len: 26, ponta: 1, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] },
+      B2: { nucleo: [27.0, -4.6, 18], alas: [{ x: 16.2, z: -1.65, ang: 29, len: 24, ponta: -1, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: 40.3, z: -11.9, ang: 8, len: 24, ponta: 1, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] }
     };
     const D = 13, COR = 1.6, UD = (D - COR) / 2, B = 0.6, VZ = 1.2;
     const CORES = { bege: 0xDCD4CA, cinza: 0x8F8880, tijolo: 0x9A4630, madeira: 0x8A5236, coroa: 0xBDB4A8 };
@@ -1226,6 +1226,11 @@ function iniciar(DATA) {
             const fz = s > 0 ? '+z' : '-z', zf = s * D / 2;
             // quadro cinza recuado da varanda, do 1º andar à cobertura (ritmo do render)
             quadros.push([xc - UW * 0.18, H / 2 + B / 2, zf + s * 0.03, UW * 0.42, H - B - 0.6, fz]);
+            // apartamentos da ponta da ala (finais 3/4 e 9/10, tipo B): varanda e janela também na fachada lateral
+            const naPonta = Math.sign(xc) === A.ponta && Math.abs(xc) > L / 2 - UW;
+            const fx = A.ponta > 0 ? '+x' : '-x', xe = A.ponta * L / 2, zc = s * (COR / 2 + UD / 2);
+            const WX = (z, y, w, h, reg) => { caixilhos.push([xe + A.ponta * 0.04, y, z, w + 0.14, h + 0.14, fx]); vidros.push([xe + A.ponta * 0.07, y, z, w, h, fx, reg]); };
+            if (naPonta) quadros.push([xe + A.ponta * 0.03, H / 2 + B / 2, zc - s * 0.6, 2.3, H - B - 0.6, fx]);
             bc.andares.forEach((andar, k) => {
               const u = porChave[`${bloco}|${andar}|${final}`]; if (!u) return;
               const y0 = B + k * FH;
@@ -1235,6 +1240,13 @@ function iniciar(DATA) {
               paineis.push([xc + UW * 0.26 + 1.05, y0 + 1.6, zf + s * 0.05, 0.9, 1.0, fz]);        // painel marrom ao lado
               lajes.push([xc - UW * 0.18, y0 + 0.08, zf + s * VZ / 2, UW * 0.42, 0.16, VZ]);
               guardas.push([xc - UW * 0.18, y0 + 0.65, zf + s * VZ, UW * 0.42, fz, reg]);
+              if (naPonta) {
+                WX(zc - s * 0.6, y0 + 1.1, 1.6, 2.1, reg);                                           // porta da varanda lateral
+                WX(zc + s * 1.9, y0 + 1.6, 1.0, 1.0, reg);                                           // janela lateral
+                paineis.push([xe + A.ponta * 0.05, y0 + 1.6, zc + s * 2.95, 0.9, 1.0, fx]);
+                lajes.push([xe + A.ponta * VZ / 2, y0 + 0.08, zc - s * 0.6, VZ, 0.16, 2.3]);
+                guardas.push([xe + A.ponta * VZ, y0 + 0.65, zc - s * 0.6, 2.3, fx, reg]);
+              }
               const pk = new THREE.Mesh(new THREE.BoxGeometry(UW - 0.15, FH - 0.1, UD), new THREE.MeshBasicMaterial({ visible: false }));
               pk.position.set(xc, y0 + FH / 2, s * (COR / 2 + UD / 2)); wg.add(pk); pk.userData.reg = reg; pick.push(pk);
               reg.pk = pk; reg.grupo = g;
@@ -1244,7 +1256,7 @@ function iniciar(DATA) {
           });
         });
         // faixas verticais cinza nas pontas das alas
-        [-1, 1].forEach((h) => { vol(h * L / 2 - (h > 0 ? 0.01 : -0.01) - 0.6, h * L / 2 + 0.6, -D / 2 + 2.5, D / 2 - 2.5, mCinza); });
+        [-1, 1].forEach((h) => { vol(h * L / 2 - (h > 0 ? 0.01 : -0.01) - 0.6, h * L / 2 + 0.6, -COR / 2 - 0.3, COR / 2 + 0.3, mCinza); });
         const plano = new THREE.PlaneGeometry(1, 1);
         const posI = (arr, mesh, fn) => arr.forEach((a, i) => { fn(a); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); });
         const plan = ([x, y, z, w, hh, f]) => { dummy.position.set(x, y, z); dummy.rotation.set(0, ROT[f], 0); dummy.scale.set(w, hh, 1); };
