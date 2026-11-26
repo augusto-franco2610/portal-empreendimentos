@@ -1128,12 +1128,10 @@ function iniciar(DATA) {
 
   // ======================================================================
   // Vale do Bosque Jundiaí (Conceito Viver), 1ª fase: torres B1 e B2.
-  // Posição, ângulo e tamanho das alas tirados da implantação do book v12 (as duas torres
-  // da esquerda, junto ao edifício-garagem); acabamento pelos renders da portaria e da fachada:
-  // prédio bege com quadros cinza nas varandas, painéis marrons nas janelas e o núcleo cor de
-  // tijolo na dobra entre as duas alas. Cada torre: 2 alas com 3 apartamentos de cada lado do
-  // corredor (12 por andar), térreo ao 15º. A posição de cada coluna no pavimento é ilustrativa
-  // pelas fichas por final da Conceito Viver (26/11/2026): nas duas torres, ala da direita com 1-2-3 de frente
+  // Posição, ângulo e tamanho das alas pela implantação; acabamento pela maquete do stand (vídeo de
+  // 26/11/2026): fachada cinza-clara, varandas recuadas em cinza escuro, faixa vertical e painéis das
+  // janelas em verde-musgo. Cada torre: 2 alas com 3 apartamentos de cada lado do corredor
+  // (12 por andar), térreo ao 15º. Posição de cada coluna pelas fichas por final da Conceito Viver (26/11/2026): nas duas torres, ala da direita com 1-2-3 de frente
   // para a estrada (a partir do núcleo) e 4-5-6 nos fundos; ala da esquerda com 10-11-12 na frente e 7-8-9 nos fundos.
   // ======================================================================
   function montarValeBosque() {
@@ -1150,34 +1148,39 @@ function iniciar(DATA) {
     for (let i = 0; i < 46; i++) cx(4.5, 0.04, 0.3, mat(0xEDEDED), -125 + i * 12, 0.13, 32, false);
     cx(260, 0.3, 2.4, calc, 0, 0.15, 26.6, false);
     const pl = placa('☰ ESTRADA', 'Velha da Boiada · frente', '#FFD27A'); pl.position.set(-30, 5.5, 15); pl.scale.set(11, 3.4, 1);
-    // edifício-garagem (render da fachada: madeira com faixas de janela, moldura branca, sobre pilotis)
-    const texGar = (() => {
-      const c = document.createElement('canvas'); c.width = 1024; c.height = 256; const g = c.getContext('2d');
-      g.fillStyle = '#7A5136'; g.fillRect(0, 0, 1024, 256);
-      for (let x = 0; x < 1024; x += 8) { g.fillStyle = x % 16 ? 'rgba(0,0,0,.08)' : 'rgba(255,220,180,.06)'; g.fillRect(x, 0, 4, 256); }
-      g.fillStyle = '#EDE8DF'; g.fillRect(0, 0, 1024, 14); g.fillRect(0, 168, 1024, 18);
-      g.fillStyle = '#2B2B2E'; g.fillRect(0, 186, 1024, 70);                              // pilotis
-      [[40, 110], [70, 140]].forEach(([y0, y1]) => { for (let x = 30; x < 1000; x += 120) { g.fillStyle = '#F6D7A0'; g.fillRect(x, y0, 70, 26); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x + 34, y0, 3, 26); } });
-      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
-    })();
-    const mGar = new THREE.MeshStandardMaterial({ map: texGar, roughness: 0.85 });
-    const gar = new THREE.Mesh(new THREE.BoxGeometry(62, 9, 13), [mat(0x7A5136), mat(0x7A5136), mat(0x9A9C9F), mat(0x8A8C8F), mGar, mGar]);
-    gar.position.set(2, 4.5, 16.5); gar.castShadow = gar.receiveShadow = true; sg.add(gar);
-    cx(63, 0.5, 14, mat(0xEDE8DF), 2, 9.2, 16.5);
-    const ramp = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 1.6, 40, 1, false, 0, Math.PI), mat(0x8C8E92)); ramp.position.set(0, 0.8, 9); ramp.rotation.y = Math.PI / 2; ramp.castShadow = true; sg.add(ramp);
-    // portaria (render: parede bege com o nome, marquise branca, painel de ripas de madeira e portão)
+    // frente pela implantação 897-22 FL09 R02 e pela maquete do stand (vídeo de 26/11/2026): dois edifícios-garagem
+    // baixos de concreto cinza ao longo da estrada (cobertura com vagas e guarda-corpo escuro), praça circular com
+    // arquibancada entre as torres, estacionamento de visitantes nas pontas e portaria com totem marrom e marquise branca
+    const mConc = mat(0xB3B2AE, { roughness: 0.9 }), mConcEsc = mat(0x8E8D89), mGuardaEsc = mat(0x2A2A2C);
+    const garagem = (x0, x1, z0, z1) => {
+      const w = x1 - x0, d = z1 - z0, xc = (x0 + x1) / 2, zc = (z0 + z1) / 2, h = 5.6;
+      cx(w, h, d, mConc, xc, h / 2, zc);
+      cx(w + 0.1, 1.1, d + 0.1, mConcEsc, xc, 1.9, zc); cx(w + 0.1, 1.1, d + 0.1, mConcEsc, xc, 4.1, zc);   // aberturas dos pavimentos
+      cx(w, 0.08, d, mat(0x9C9B97), xc, h + 0.04, zc, false);
+      for (let x = x0 + 1.5; x < x1 - 1; x += 2.6) { cx(0.1, 0.02, 4.6, mat(0xF2F2F2), x, h + 0.1, z0 + 2.6, false); cx(0.1, 0.02, 4.6, mat(0xF2F2F2), x, h + 0.1, z1 - 2.6, false); }
+      [z0, z1].forEach((z) => cx(w, 1.1, 0.12, mGuardaEsc, xc, h + 0.6, z));
+      [x0, x1].forEach((x) => cx(0.12, 1.1, d, mGuardaEsc, x, h + 0.6, zc));
+      cx(w, 0.5, 0.9, mat(0x5E8F45), xc, h + 0.3, z1 - 0.6);                                          // jardineira
+    };
+    garagem(-26.6, 10.3, 13.1, 24.4); garagem(17.2, 37.8, 13.1, 24.4);
+    // praça circular com arquibancada voltada para as torres
+    const praca = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 1.2, 48), mat(0xD9D7D2)); praca.position.set(1.4, 0.6, 6); praca.castShadow = praca.receiveShadow = true; sg.add(praca);
+    [8.4, 9.3, 10.2].forEach((r, k) => { const d = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.9 - k * 0.28, 48, 1, false, Math.PI * 0.5, Math.PI), mat(0xE6E4DF)); d.position.set(1.4, (0.9 - k * 0.28) / 2, 6); d.receiveShadow = true; sg.add(d); });
+    // estacionamento de visitantes nas pontas, no nível da rua
+    [[-58.5, -27], [37.8, 57.5]].forEach(([x0, x1]) => { cx(x1 - x0, 0.14, 6.4, mat(0x6E6F72), (x0 + x1) / 2, 0.08, 21, false); for (let x = x0 + 1.2; x < x1; x += 2.5) cx(0.1, 0.03, 4.8, mat(0xF2F2F2), x, 0.17, 21.6, false); });
+    // portaria (maquete: totem marrom escuro com o nome, marquise branca e portão), no acesso "E" da implantação
     const texNome = (() => {
       const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
-      g.fillStyle = '#B9AFA3'; g.fillRect(0, 0, 512, 256);
-      g.fillStyle = '#3F6B2E'; g.font = 'italic 600 54px Georgia, serif'; g.textAlign = 'center'; g.fillText('Vale do', 290, 96);
+      g.fillStyle = '#4A3A30'; g.fillRect(0, 0, 512, 256);
+      g.fillStyle = '#E9E2D6'; g.font = 'italic 600 54px Georgia, serif'; g.textAlign = 'center'; g.fillText('Vale do', 290, 96);
       g.font = '700 92px Georgia, serif'; g.fillText('Bosque', 270, 180); g.font = '600 22px Montserrat, sans-serif'; g.fillText('J U N D I A Í', 270, 214);
       const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
     })();
-    const muroNome = new THREE.Mesh(new THREE.BoxGeometry(8, 6, 1.2), [mat(0xB9AFA3), mat(0xB9AFA3), mat(0xB9AFA3), mat(0xB9AFA3), new THREE.MeshStandardMaterial({ map: texNome, roughness: 0.8 }), mat(0xB9AFA3)]);
-    muroNome.position.set(38, 3, 23.4); muroNome.castShadow = true; sg.add(muroNome);
-    cx(9, 0.5, 6, mat(0xEFECE6), 44.5, 4.6, 22.5);                                    // marquise
-    cx(4, 4.4, 0.4, mat(0x9C6A42), 46, 2.2, 21);                                     // ripas de madeira
-    for (let k = 0; k < 9; k++) cx(0.12, 2.2, 0.12, mat(0x2A2B2D), 49.5 + k * 0.6, 1.1, 24.2);   // portão
+    const totem = new THREE.Mesh(new THREE.BoxGeometry(6.5, 6.5, 1.4), [mat(0x4A3A30), mat(0x4A3A30), mat(0x4A3A30), mat(0x4A3A30), new THREE.MeshStandardMaterial({ map: texNome, roughness: 0.8 }), mat(0x4A3A30)]);
+    totem.position.set(-31.5, 3.25, 24.6); totem.castShadow = true; sg.add(totem);
+    cx(8, 0.45, 5, mat(0xF2F0EC), -25.5, 4.2, 24.2);                                   // marquise
+    cx(3.2, 3.4, 3, mat(0x8A5A38), -24, 1.7, 23.6);                                     // guarita revestida de madeira
+    for (let k = 0; k < 9; k++) cx(0.12, 2.2, 0.12, mat(0x2A2B2D), -29 + k * 0.6, 1.1, 25.6);   // portão
     // lazer entre as torres e a mata (piscinas, quadra)
     const agua = new THREE.MeshStandardMaterial({ color: C(0x37C3E6), emissive: C(0x0E5F7A), emissiveIntensity: 0.6, roughness: 0.08 });
     cx(16, 0.2, 9, mat(0xE2DCCD), 58, 0.12, -12, false); cx(11, 0.25, 5, agua, 56.5, 0.14, -12, false); cx(3.2, 0.25, 3.2, agua, 63, 0.14, -12, false);
@@ -1186,7 +1189,7 @@ function iniciar(DATA) {
     const nArv = scene.children.length;
     for (let i = 0; i < 120; i++) { const x = -70 + rnd() * 140, z = -14 - rnd() * 40; if (z > -24 && x > -8 && x < 50) continue; arvore(x, z, 1.2 + rnd() * 0.9); }
     [[-60, 22], [-46, 22], [-20, 25], [20, 25], [30, 12], [-55, 12], [8, -1], [-6, -6]].forEach(([x, z], i) => arvore(x * ESC, z * ESC, 0.9 + (i % 3) * 0.15));
-    for (let i = 0; i < 40; i++) { const a = rnd() * Math.PI * 2, d = 75 + rnd() * 60; const x = Math.cos(a) * d, z = Math.sin(a) * d; if (z > 8 && z < 20) continue; arvore(x, z, 1 + rnd() * 0.8); }
+    for (let i = 0; i < 40; i++) { const a = rnd() * Math.PI * 2, d = 75 + rnd() * 60; const x = Math.cos(a) * d, z = Math.sin(a) * d; if (z > 4 && z < 30 && Math.abs(x) < 80) continue; arvore(x, z, 1 + rnd() * 0.8); }
     const telhaM = mat(0xA9553A), casaM = mat(0xE8E1D4);
     for (let i = 0; i < 22; i++) {
       const x = -70 + i * 6.5 + rnd() * 2, z = 19 + rnd() * 8;
@@ -1202,14 +1205,15 @@ function iniciar(DATA) {
       B2: { nucleo: [27.0, -4.6, 18], alas: [{ x: 16.2, z: -1.65, ang: 29, len: 24, ponta: -1, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: 40.3, z: -11.9, ang: 8, len: 24, ponta: 1, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] }
     };
     const D = 13, COR = 1.6, UD = (D - COR) / 2, B = 0.6, VZ = 1.2;
-    const CORES = { bege: 0xDCD4CA, cinza: 0x8F8880, tijolo: 0x9A4630, madeira: 0x8A5236, coroa: 0xBDB4A8 };
+    // cores pela maquete do stand: fachada cinza-clara, varandas recuadas em cinza escuro, faixa vertical e painéis verde-musgo
+    const CORES = { bege: 0xE3E2DE, cinza: 0x76716D, tijolo: 0x2E5A3B, madeira: 0x3E6A47, coroa: 0xCFCDC8 };
     Object.entries(TORRES).forEach(([bloco, T]) => {
       const bc = cfg.blocos[bloco];
       const g = new THREE.Group(); g.scale.setScalar(ESC); scene.add(g); blocosGrupo[bloco] = g;
       const NIV = bc.andares.length, H = B + NIV * FH;
       const tl = texLajes(NIV);
       const mBege = mat(CORES.bege, { map: tl }), mCinza = mat(CORES.cinza, { map: tl }), mTij = mat(CORES.tijolo, { roughness: 0.85 }), mCoroa = mat(CORES.coroa);
-      // núcleo cor de tijolo na dobra entre as alas (mais alto que a cobertura)
+      // faixa vertical verde-musgo na dobra entre as alas (núcleo, mais alto que a cobertura)
       const nc = caixa(7, H + 4.5, 9, mTij, T.nucleo[0], (H + 4.5) / 2, T.nucleo[1], true, g); nc.rotation.y = T.nucleo[2] * Math.PI / 180;
       T.alas.forEach((A) => {
         const wg = new THREE.Group(); wg.position.set(A.x, 0, A.z); wg.rotation.y = A.ang * Math.PI / 180; g.add(wg);
@@ -2010,7 +2014,7 @@ function iniciar(DATA) {
   }
 
   function inicioPainel() {
-    const top = unidades.filter((r) => r.estado === 'livre').sort((a, b) => (a.u.preco || 9e9) - (b.u.preco || 9e9))[0];
+    const top = unidades.filter((r) => r.estado === 'livre' && r.u.preco > 0).sort((a, b) => a.u.preco - b.u.preco)[0];
     $('#painel-rolagem').innerHTML = `
       ${cont.consulta ? `<span class="chip consulta">${cont.consulta} unidades · status a confirmar</span>` : `<span class="chip livre">${cont.livre} disponíveis</span>`}
       <h2 class="un-titulo">Escolha a unidade</h2>
