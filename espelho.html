@@ -299,7 +299,7 @@ const CONFIG = {
     // posição de cada final pelas fichas por final. Sol: implantação marca o NASCENTE do lado dos fundos.
     modelo: 'valebosque', rotBloco: 'Torre', varanda: 'Varanda',
     giroSol: Math.PI, marcasSol: { centro: [0, -1], raio: 34 },
-    sol: (() => { const o = {}; ['B1', 'B2'].forEach((t) => { o[t] = { manha: ['4', '5', '6', '7', '8', '9'], tarde: ['1', '2', '3', '10', '11', '12'] }; }); return o; })(),
+    sol: (() => { const o = {}; ['B1', 'B2'].forEach((t) => { o[t] = { manha: ['1', '2', '3', '10', '11', '12'], tarde: ['4', '5', '6', '7', '8', '9'] }; }); return o; })(),
     cam: { pos: [16, 26, 62], mob: [12, 40, 92], alvo: [8, 8, -2], max: 260 }, soTabela: true,
     numUn: (a, f) => (a === '0' ? '' : a) + String(f).padStart(2, '0'),
     blocos: (() => {
@@ -1131,8 +1131,9 @@ function iniciar(DATA) {
   // Posição, ângulo e tamanho das alas pela implantação; acabamento pela maquete do stand (vídeo de
   // 26/11/2026): fachada cinza-clara, varandas recuadas em cinza escuro, faixa vertical e painéis das
   // janelas em marrom-escuro; torres num platô 6 m abaixo da rua, garagens com a cobertura no nível da rua. Cada torre: 2 alas com 3 apartamentos de cada lado do corredor
-  // (12 por andar), térreo ao 15º. Posição de cada coluna pelas fichas por final da Conceito Viver (26/11/2026): nas duas torres, ala da direita com 1-2-3 de frente
-  // para a estrada (a partir do núcleo) e 4-5-6 nos fundos; ala da esquerda com 10-11-12 na frente e 7-8-9 nos fundos.
+  // (12 por andar), térreo ao 15º. Posição de cada coluna pelas fichas por final da Conceito Viver (26/11/2026), com a
+  // correção do Franco de que as torres ficam "de costas" para a estrada: ala da direita com 4-5-6 na frente (4 na ponta)
+  // e 1-2-3 nos fundos (1 junto ao núcleo); ala da esquerda com 7-8-9 na frente (9 na ponta) e 10-11-12 nos fundos.
   // ======================================================================
   function montarValeBosque() {
     ESC = 0.4; FH = 2.8;
@@ -1253,8 +1254,8 @@ function iniciar(DATA) {
 
     // ---- torres: alas (metros; ângulo em graus medido na implantação) ----
     const TORRES = {
-      B1: { nucleo: [-31.4, 8.2, 15], alas: [{ x: -43.2, z: 6.9, ang: 6, len: 22, ponta: -1, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: -17.8, z: -2.0, ang: 24, len: 26, ponta: 1, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] },
-      B2: { nucleo: [27.0, -4.6, 18], alas: [{ x: 16.2, z: -1.65, ang: 29, len: 24, ponta: -1, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: 40.3, z: -11.9, ang: 8, len: 24, ponta: 1, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] }
+      B1: { nucleo: [-31.4, 8.2, 15], alas: [{ x: -43.2, z: 6.9, ang: 6, len: 22, ponta: -1, frente: ['9', '8', '7'], fundos: ['12', '11', '10'] }, { x: -17.8, z: -2.0, ang: 24, len: 26, ponta: 1, frente: ['6', '5', '4'], fundos: ['3', '2', '1'] }] },
+      B2: { nucleo: [27.0, -4.6, 18], alas: [{ x: 16.2, z: -1.65, ang: 29, len: 24, ponta: -1, frente: ['9', '8', '7'], fundos: ['12', '11', '10'] }, { x: 40.3, z: -11.9, ang: 8, len: 24, ponta: 1, frente: ['6', '5', '4'], fundos: ['3', '2', '1'] }] }
     };
     const D = 13, COR = 1.6, UD = (D - COR) / 2, B = 0.6, VZ = 1.2;
     // cores pela maquete do stand: fachada cinza-clara, varandas recuadas em cinza escuro; B1 e B2 com faixa vertical e painéis marrom-escuros (confirmado pelo Franco em 26/11/2026)
