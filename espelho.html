@@ -295,9 +295,11 @@ const CONFIG = {
   },
   'vale-do-bosque-jundiai': {
     // Espelho de vendas da 1ª fase (placa do stand, foto de 25/11/2026): torres B1 e B2,
-    // 12 colunas por andar, do térreo ao 15º. Torres pela implantação e renders do book v12
-    // (as duas da esquerda, junto ao edifício-garagem); posição das colunas no pavimento ilustrativa.
+    // 12 colunas por andar, do térreo ao 15º. Torres pela implantação (897-22 FL09 R02) e renders do book v12;
+    // posição de cada final pelas fichas por final. Sol: implantação marca o NASCENTE do lado dos fundos.
     modelo: 'valebosque', rotBloco: 'Torre', varanda: 'Varanda',
+    giroSol: Math.PI, marcasSol: { centro: [0, -1], raio: 34 },
+    sol: (() => { const o = {}; ['B1', 'B2'].forEach((t) => { o[t] = { manha: ['4', '5', '6', '7', '8', '9'], tarde: ['1', '2', '3', '10', '11', '12'] }; }); return o; })(),
     cam: { pos: [16, 26, 62], mob: [12, 40, 92], alvo: [8, 8, -2], max: 260 }, soTabela: true,
     numUn: (a, f) => (a === '0' ? '' : a) + String(f).padStart(2, '0'),
     blocos: (() => {
@@ -308,7 +310,7 @@ const CONFIG = {
     plantas: [
       { k: 'a', rot: 'Tipo A 46,62 m²', nome: /^Tipo A\b/ }, { k: 'b', rot: 'Tipo B 53,99 m²', nome: /^Tipo B\b/ },
       { k: 'c', rot: 'Tipo C 46,80 m²', nome: /^Tipo C\b/ }, { k: 'd', rot: 'Tipo D 40,00 m²', nome: /^Tipo D\b/ },
-      { k: 'e', rot: 'Tipo E 40,18 m²', nome: /^Tipo E\b/ }, { k: 'pne', rot: 'PNE 54,14 m²', nome: /^Tipo PNE\b/ }
+      { k: 'e', rot: 'Tipo E 40,18 m²', nome: /^Tipo E\b/ }
     ]
   },
   'brisas-do-japi': {
@@ -1131,7 +1133,8 @@ function iniciar(DATA) {
   // prédio bege com quadros cinza nas varandas, painéis marrons nas janelas e o núcleo cor de
   // tijolo na dobra entre as duas alas. Cada torre: 2 alas com 3 apartamentos de cada lado do
   // corredor (12 por andar), térreo ao 15º. A posição de cada coluna no pavimento é ilustrativa
-  // (ainda sem a planta do pavimento): frente para a estrada 1-2-3 e 7-8-9, fundos 4-5-6 e 10-11-12.
+  // pelas fichas por final da Conceito Viver (26/11/2026): nas duas torres, ala da direita com 1-2-3 de frente
+  // para a estrada (a partir do núcleo) e 4-5-6 nos fundos; ala da esquerda com 10-11-12 na frente e 7-8-9 nos fundos.
   // ======================================================================
   function montarValeBosque() {
     ESC = 0.4; FH = 2.8;
@@ -1195,8 +1198,8 @@ function iniciar(DATA) {
 
     // ---- torres: alas (metros; ângulo em graus medido na implantação) ----
     const TORRES = {
-      B1: { nucleo: [-31.4, 8.2, 15], alas: [{ x: -43.2, z: 6.9, ang: 6, len: 22, frente: ['1', '2', '3'], fundos: ['6', '5', '4'] }, { x: -17.8, z: -2.0, ang: 24, len: 26, frente: ['7', '8', '9'], fundos: ['12', '11', '10'] }] },
-      B2: { nucleo: [27.0, -4.6, 18], alas: [{ x: 16.2, z: -1.65, ang: 29, len: 24, frente: ['1', '2', '3'], fundos: ['6', '5', '4'] }, { x: 40.3, z: -11.9, ang: 8, len: 24, frente: ['7', '8', '9'], fundos: ['12', '11', '10'] }] }
+      B1: { nucleo: [-31.4, 8.2, 15], alas: [{ x: -43.2, z: 6.9, ang: 6, len: 22, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: -17.8, z: -2.0, ang: 24, len: 26, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] },
+      B2: { nucleo: [27.0, -4.6, 18], alas: [{ x: 16.2, z: -1.65, ang: 29, len: 24, frente: ['10', '11', '12'], fundos: ['7', '8', '9'] }, { x: 40.3, z: -11.9, ang: 8, len: 24, frente: ['1', '2', '3'], fundos: ['4', '5', '6'] }] }
     };
     const D = 13, COR = 1.6, UD = (D - COR) / 2, B = 0.6, VZ = 1.2;
     const CORES = { bege: 0xDCD4CA, cinza: 0x8F8880, tijolo: 0x9A4630, madeira: 0x8A5236, coroa: 0xBDB4A8 };
