@@ -296,10 +296,10 @@ const CONFIG = {
   'vale-do-bosque-jundiai': {
     // Espelho de vendas da 1ª fase (placa do stand, foto de 25/11/2026): torres B1 e B2,
     // 12 colunas por andar, do térreo ao 15º. Torres pela implantação (897-22 FL09 R02) e renders do book v12;
-    // posição de cada final pelas fichas por final. Sol: implantação marca o NASCENTE do lado dos fundos.
+    // posição de cada final pela planta da B1. Sol (Franco, 28/11/2026): frente para a rua = sol da manhã; fundos = tarde.
     modelo: 'valebosque', rotBloco: 'Torre', varanda: 'Varanda',
-    giroSol: Math.PI, marcasSol: { centro: [0, -1], raio: 34 },
-    sol: (() => { const o = {}; ['B1', 'B2'].forEach((t) => { o[t] = { manha: ['4', '5', '6', '7', '8', '9'], tarde: ['1', '2', '3', '10', '11', '12'] }; }); return o; })(),
+    giroSol: 0, marcasSol: { centro: [0, -1], raio: 34 },
+    sol: (() => { const o = {}; ['B1', 'B2'].forEach((t) => { o[t] = { manha: ['1', '2', '3', '10', '11', '12'], tarde: ['4', '5', '6', '7', '8', '9'] }; }); return o; })(),
     cam: { pos: [16, 26, 62], mob: [12, 40, 92], alvo: [8, 8, -2], max: 260 }, soTabela: true,
     numUn: (a, f) => (a === '0' ? '' : a) + String(f).padStart(2, '0'),
     blocos: (() => {
